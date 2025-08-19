@@ -93,6 +93,19 @@ class SubscriptionAdminView {
                 'suspend' => __('Askıya Al', 'iyzico-subscription'),
                 'cancel' => __('İptal Et', 'iyzico-subscription'),
                 'reactivate' => __('Yeniden Aktifleştir', 'iyzico-subscription'),
+                // Saved cards i18n
+                'savedCards' => __('Kayıtlı Kartlar', 'iyzico-subscription'),
+                'noSavedCards' => __('Kayıtlı kart bulunamadı.', 'iyzico-subscription'),
+                'addNewCard' => __('Yeni Kart Ekle', 'iyzico-subscription'),
+                'cardAlias' => __('Kart Takma Adı', 'iyzico-subscription'),
+                'cardHolderName' => __('Kart Sahibi Adı', 'iyzico-subscription'),
+                'cardNumber' => __('Kart Numarası', 'iyzico-subscription'),
+                'expireMonth' => __('Son Kullanma Ayı (AA)', 'iyzico-subscription'),
+                'expireYear' => __('Son Kullanma Yılı (YYYY)', 'iyzico-subscription'),
+                'create' => __('Oluştur', 'iyzico-subscription'),
+                'close' => __('Kapat', 'iyzico-subscription'),
+                'fetching' => __('Yükleniyor...', 'iyzico-subscription'),
+                'createdSuccess' => __('Kart başarıyla oluşturuldu.', 'iyzico-subscription'),
             ],
         ];
 
