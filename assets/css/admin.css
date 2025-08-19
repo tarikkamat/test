@@ -746,11 +746,6 @@
         font-size: 0.625rem;
     }
     
-    .iyzico-table thead th,
-    .iyzico-table tbody td {
-        padding: 0.5rem 0.25rem;
-    }
-    
     .iyzico-bulk-actions {
         flex-direction: column;
         align-items: stretch;
@@ -860,3 +855,45 @@
     max-width: 100%;
 }
 
+/* Overrides - Compact Admin Adjustments */
+/* Widget sizing and icon removal */
+.iyzico-stats-grid {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+.iyzico-stat-card {
+	padding: 0.75rem;
+	min-height: 90px;
+	max-height: 110px;
+}
+.iyzico-stat-value {
+	font-size: 1.25rem;
+	font-weight: 700;
+}
+/* Hide any remaining stat icons if present */
+.iyzico-stat-icon, .iyzico-stat-icon .dashicons { display: none !important; }
+
+/* Table responsiveness */
+.iyzico-table { table-layout: auto; }
+
+/* Narrow columns for better fit */
+.iyzico-column-customer,
+.iyzico-column-product { width: 160px; min-width: 140px; }
+.iyzico-column-amount { width: 90px; }
+.iyzico-column-actions { width: 110px; }
+
+/* Filters: stabilize layout and sizes */
+.iyzico-filters-form { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; align-items: end; }
+.iyzico-form-input, .iyzico-form-select { height: 36px; }
+
+/* Responsive tweaks */
+@media (max-width: 1200px) {
+	.iyzico-stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; }
+}
+@media (max-width: 768px) {
+	.iyzico-table { min-width: 680px; font-size: 0.7rem; }
+}
+@media (max-width: 480px) {
+	.iyzico-table { min-width: 560px; font-size: 0.65rem; }
+}

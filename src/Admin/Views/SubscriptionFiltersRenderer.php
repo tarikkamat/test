@@ -5,7 +5,7 @@ namespace Iyzico\IyzipayWoocommerceSubscription\Admin\Views;
 class SubscriptionFiltersRenderer {
     public function render(array $filters): void {
         ?>
-        <div class="tablenav top">
+        <div class="tablenav top iyzico-filters-section">
             <div class="alignleft actions">
                 <form method="get" class="iyzico-filters-form">
                     <input type="hidden" name="page" value="iyzico-subscriptions">
@@ -13,7 +13,7 @@ class SubscriptionFiltersRenderer {
                     <label for="status-filter" class="screen-reader-text">
                         <?php _e('Durum filtresi', 'iyzico-subscription'); ?>
                     </label>
-                    <select name="status" id="status-filter">
+                    <select name="status" id="status-filter" class="iyzico-form-select">
                         <option value=""><?php _e('Tüm Durumlar', 'iyzico-subscription'); ?></option>
                         <option value="active" <?php selected($filters['status'], 'active'); ?>>
                             <?php _e('Aktif', 'iyzico-subscription'); ?>
@@ -32,24 +32,24 @@ class SubscriptionFiltersRenderer {
                     <label for="customer-search" class="screen-reader-text">
                         <?php _e('Müşteri ara', 'iyzico-subscription'); ?>
                     </label>
-                    <input type="search" name="customer_search" id="customer-search" 
+                    <input type="search" name="customer_search" id="customer-search" class="iyzico-form-input"
                            placeholder="<?php _e('Müşteri ara...', 'iyzico-subscription'); ?>" 
                            value="<?php echo esc_attr($filters['customer_search']); ?>">
                     
                     <label for="date-from" class="screen-reader-text">
                         <?php _e('Başlangıç tarihi', 'iyzico-subscription'); ?>
                     </label>
-                    <input type="date" name="date_from" id="date-from" 
+                    <input type="date" name="date_from" id="date-from" class="iyzico-form-input"
                            value="<?php echo esc_attr($filters['date_from']); ?>">
                     
                     <label for="date-to" class="screen-reader-text">
                         <?php _e('Bitiş tarihi', 'iyzico-subscription'); ?>
                     </label>
-                    <input type="date" name="date_to" id="date-to" 
+                    <input type="date" name="date_to" id="date-to" class="iyzico-form-input"
                            value="<?php echo esc_attr($filters['date_to']); ?>">
                     
-                    <input type="submit" class="button action" value="<?php _e('Filtrele', 'iyzico-subscription'); ?>">
-                    <a href="?page=iyzico-subscriptions" class="button">
+                    <input type="submit" class="button action iyzico-btn iyzico-btn-primary" value="<?php _e('Filtrele', 'iyzico-subscription'); ?>">
+                    <a href="?page=iyzico-subscriptions" class="button iyzico-btn iyzico-btn-secondary">
                         <?php _e('Temizle', 'iyzico-subscription'); ?>
                     </a>
                 </form>

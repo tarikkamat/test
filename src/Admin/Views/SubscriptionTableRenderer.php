@@ -52,28 +52,28 @@ class SubscriptionTableRenderer {
 
     private function render_table(array $subscriptions): void {
         ?>
-        <div class="subscriptions-table-container">
+        <div class="subscriptions-table-container iyzico-table-container">
             <form id="subscriptions-filter" method="get">
                 <input type="hidden" name="page" value="iyzico-subscriptions">
                 
-                <table class="wp-list-table widefat fixed striped subscriptions">
+                <table class="wp-list-table widefat fixed striped subscriptions iyzico-table">
                     <thead>
                         <tr>
-                            <td id="cb" class="manage-column column-cb check-column">
+                            <td id="cb" class="manage-column column-cb check-column iyzico-column-cb">
                                 <label class="screen-reader-text" for="cb-select-all-1">
                                     <?php _e('Tümünü seç', 'iyzico-subscription'); ?>
                                 </label>
                                 <input id="cb-select-all-1" type="checkbox">
                             </td>
-                            <th scope="col" class="manage-column column-id"><?php _e('ID', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-customer"><?php _e('Müşteri', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-product"><?php _e('Ürün', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-status"><?php _e('Durum', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-amount"><?php _e('Tutar', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-period"><?php _e('Periyot', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-start-date"><?php _e('Başlangıç', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-next-payment"><?php _e('Sonraki Ödeme', 'iyzico-subscription'); ?></th>
-                            <th scope="col" class="manage-column column-actions"><?php _e('İşlemler', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-id iyzico-column-id"><?php _e('ID', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-customer iyzico-column-customer"><?php _e('Müşteri', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-product iyzico-column-product"><?php _e('Ürün', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-status iyzico-column-status"><?php _e('Durum', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-amount iyzico-column-amount"><?php _e('Tutar', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-period iyzico-column-period"><?php _e('Periyot', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-start-date iyzico-column-dates"><?php _e('Başlangıç', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-next-payment iyzico-column-dates"><?php _e('Sonraki Ödeme', 'iyzico-subscription'); ?></th>
+                            <th scope="col" class="manage-column column-actions iyzico-column-actions"><?php _e('İşlemler', 'iyzico-subscription'); ?></th>
                         </tr>
                     </thead>
                     <tbody id="the-list">
@@ -103,7 +103,7 @@ class SubscriptionTableRenderer {
                 <input type="checkbox" name="subscription[]" value="<?php echo $subscription->id; ?>">
             </th>
             <td class="column-id">
-                <strong>#<?php echo $subscription->id; ?></strong>
+                <strong class="iyzico-amount">#<?php echo $subscription->id; ?></strong>
             </td>
             <td class="column-customer">
                 <?php $this->render_customer_cell($user); ?>
@@ -115,12 +115,12 @@ class SubscriptionTableRenderer {
                 <?php echo $this->render_status_badge($subscription->status); ?>
             </td>
             <td class="column-amount">
-                <strong><?php echo wc_price($subscription->amount); ?></strong>
+                <strong class="iyzico-amount"><?php echo wc_price($subscription->amount); ?></strong>
                 <br>
                 <span class="description"><?php echo strtoupper($subscription->currency ?? 'TRY'); ?></span>
             </td>
             <td class="column-period">
-                <span class="subscription-period"><?php echo $this->get_period_label($subscription->period); ?></span>
+                <span class="iyzico-period-badge"><?php echo $this->get_period_label($subscription->period); ?></span>
             </td>
             <td class="column-start-date">
                 <?php echo date_i18n('d/m/Y', strtotime($subscription->start_date)); ?>
@@ -181,7 +181,6 @@ class SubscriptionTableRenderer {
         </span>
         <?php if ($is_urgent) : ?>
             <br><span class="description urgent-warning">
-                <span class="dashicons dashicons-warning"></span>
                 <?php printf(__('%dg', 'iyzico-subscription'), max(0, ceil($days_diff))); ?>
             </span>
         <?php endif; ?>
