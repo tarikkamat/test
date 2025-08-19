@@ -71,12 +71,8 @@ class HookService implements HookServiceInterface
         // Ödeme işlemleri
         add_filter('woocommerce_payment_gateways', [$this->pluginService, 'addIyzicoGateway']);
         
-        // WooCommerce Blocks desteği
-        add_action('woocommerce_blocks_loaded', [$this->pluginService, 'addWooCommerceBlocksSupport']);
-        // Eğer Blocks zaten yüklendiyse veya sınıf mevcutsa hemen kaydet
-        if (class_exists('Automattic\\WooCommerce\\Blocks\\Payments\\Integrations\\AbstractPaymentMethodType')) {
-            $this->pluginService->addWooCommerceBlocksSupport();
-        }
+        // WooCommerce Blocks desteği - tek seferlik kayıt
+        $this->pluginService->addWooCommerceBlocksSupport();
     }
 
     public function registerAdminHooks(): void
