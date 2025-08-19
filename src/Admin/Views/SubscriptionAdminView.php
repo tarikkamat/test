@@ -37,22 +37,6 @@ class SubscriptionAdminView {
         wp_enqueue_script('wp-lists');
         wp_enqueue_script('postbox');
         
-        // Bootstrap CSS ve JS
-        wp_enqueue_style(
-            'bootstrap',
-            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
-            [],
-            '5.3.0'
-        );
-        
-        wp_enqueue_script(
-            'bootstrap',
-            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
-            ['jquery'],
-            '5.3.0',
-            true
-        );
-        
         // Custom admin script
         $js_url = plugin_dir_url(__FILE__) . '../../../assets/js/admin.js';
         error_log('Admin JS URL: ' . $js_url);
@@ -60,7 +44,7 @@ class SubscriptionAdminView {
         wp_enqueue_script(
             'iyzico-subscription-admin',
             $js_url,
-            ['jquery', 'bootstrap'],
+            ['jquery'],
             '1.0.0',
             true
         );
@@ -84,7 +68,7 @@ class SubscriptionAdminView {
         wp_enqueue_style(
             'iyzico-subscription-admin',
             plugin_dir_url(__FILE__) . '../../../assets/css/admin.css',
-            ['bootstrap'],
+            [],
             '1.0.0'
         );
     }
