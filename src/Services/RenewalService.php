@@ -46,7 +46,7 @@ class RenewalService implements RenewalServiceInterface
         }
     }
 
-    public function processSingleRenewal(object $subscription): void {
+    public function processSingleRenewal(object $subscription): bool {
         try {
             // iyzico ile ödeme işlemi
             $payment_result = $this->processPayment($subscription);
@@ -62,6 +62,8 @@ class RenewalService implements RenewalServiceInterface
                 $this->emailService->sendRenewalSuccessEmail($subscription);
                 
                 do_action('iyzico_subscription_renewal_success', $subscription);
+                $this->logPaymentAttempt($subscription->id, $subscription->amount, $subscription->currency ?? 'TRY', 'success', $payment_result['payment_id'] ?? null);
+                return true;
                 
             } else {
                 // Başarısız ödeme
@@ -71,11 +73,15 @@ class RenewalService implements RenewalServiceInterface
                 $this->emailService->sendRenewalFailedEmail($subscription, $payment_result['error']);
                 
                 do_action('iyzico_subscription_renewal_failed', $subscription, $payment_result['error']);
+                $this->logPaymentAttempt($subscription->id, $subscription->amount, $subscription->currency ?? 'TRY', 'failed', null, null, $payment_result['error']);
+                return false;
             }
             
         } catch (\Exception $e) {
             error_log('Subscription renewal error: ' . $e->getMessage());
             $this->subscriptionRepository->incrementFailedPayments($subscription->id);
+            $this->logPaymentAttempt($subscription->id, $subscription->amount, $subscription->currency ?? 'TRY', 'failed', null, null, $e->getMessage());
+            return false;
         }
     }
 
@@ -213,11 +219,46 @@ class RenewalService implements RenewalServiceInterface
     }
 
     public function reactivateSubscription(int $subscription_id): bool {
+        $subscription = $this->subscriptionRepository->find($subscription_id);
+        if (!$subscription) {
+            return false;
+        }
+        // Askıda veya iptal statüsünde ise ödeme tetikle
+        if (in_array($subscription->status, ['suspended', 'cancelled'], true)) {
+            $result = $this->processSingleRenewal($subscription);
+            if ($result) {
+                // Başarılı ödeme sonrası statüyü aktive et
+                return $this->subscriptionRepository->reactivate($subscription_id);
+            }
+            return false;
+        }
+        // Aktif değilse sadece aktive et
         return $this->subscriptionRepository->reactivate($subscription_id);
     }
 
     private function cancelIyzicoSubscription(string $iyzico_subscription_id): void {
         // iyzico API ile abonelik iptal işlemi
         // Bu kısım iyzico'nun subscription API'si kullanılarak implement edilecek
+    }
+
+    private function logPaymentAttempt(int $subscription_id, float $amount, string $currency, string $status, ?string $iyzico_payment_id = null, ?string $error_code = null, ?string $error_message = null): void {
+        global $wpdb;
+        $wpdb->insert(
+            $wpdb->prefix . 'iyzico_subscription_payments',
+            [
+                'subscription_id' => $subscription_id,
+                'order_id' => null,
+                'iyzico_payment_id' => $iyzico_payment_id,
+                'amount' => $amount,
+                'currency' => $currency,
+                'status' => $status,
+                'error_code' => $error_code,
+                'error_message' => $error_message,
+                'created_at' => current_time('mysql'),
+            ],
+            [
+                '%d','%d','%s','%f','%s','%s','%s','%s'
+            ]
+        );
     }
 } 

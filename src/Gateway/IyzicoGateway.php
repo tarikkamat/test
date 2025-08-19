@@ -156,8 +156,8 @@ class IyzicoGateway extends WC_Payment_Gateway {
                 }
 
                 // Kart bilgilerini kontrol et
-                $card_token = $checkoutForm->getCardToken();
-                $card_user_key = $checkoutForm->getCardUserKey();
+                $card_token = method_exists($checkoutForm, 'getCardToken') ? $checkoutForm->getCardToken() : null;
+                $card_user_key = method_exists($checkoutForm, 'getCardUserKey') ? $checkoutForm->getCardUserKey() : null;
                 
                 if (!$card_token || !$card_user_key) {
                     // Ödemeyi iptal et
@@ -217,8 +217,12 @@ class IyzicoGateway extends WC_Payment_Gateway {
                 }
 
                 // Kart bilgilerini kaydet
-                update_user_meta($order->get_customer_id(), '_iyzico_card_token', $card_token);
-                update_user_meta($order->get_customer_id(), '_iyzico_card_user_key', $card_user_key);
+                if ($card_token) {
+                    update_user_meta($order->get_customer_id(), '_iyzico_card_token', $card_token);
+                }
+                if ($card_user_key) {
+                    update_user_meta($order->get_customer_id(), '_iyzico_card_user_key', $card_user_key);
+                }
 
                 // Siparişi tamamlandı olarak işaretle
                 $order->payment_complete($checkoutForm->getPaymentId());
@@ -319,6 +323,12 @@ class IyzicoGateway extends WC_Payment_Gateway {
         $request->setCallbackUrl(add_query_arg('wc-api', 'iyzico_subscription', home_url('/')));
         $request->setEnabledInstallments(array(1));
 
+        // Müşteri kart saklama: varsa cardUserKey'i isteğe ekle
+        $existing_card_user_key = get_user_meta($order->get_customer_id(), '_iyzico_card_user_key', true);
+        if (!empty($existing_card_user_key) && method_exists($request, 'setCardUserKey')) {
+            $request->setCardUserKey($existing_card_user_key);
+        }
+
         $buyer = new Buyer();
         $buyer->setId($order->get_customer_id());
         $buyer->setName($order->get_billing_first_name());
@@ -362,7 +372,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
     }
 
     private function create_subscription($order) {
-        $subscription_model = new \Iyzico\IyzicoSubscriptionWoocommerce\Models\Subscription();
+        $subscription_model = new \Iyzico\IyzipayWoocommerceSubscription\Models\Subscription();
         
         foreach ($order->get_items() as $item) {
             $product = $item->get_product();
@@ -538,4 +548,4 @@ Teşekkür ederiz.',
             }
         }
     }
-} 
+}
