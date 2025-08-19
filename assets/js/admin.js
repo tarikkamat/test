@@ -1,4 +1,173 @@
 /**
+ * Iyzico Subscription Admin - Minimal WordPress-compatible script
+ * - No Bootstrap
+ * - No custom table/filter/pagination logic
+ * - Handles: individual actions and bulk actions via AJAX
+ */
+
+(function($) {
+    'use strict';
+
+    function getConfig() {
+        if (typeof window.iyzicoSubscriptionAdmin === 'undefined') {
+            console.error('iyzicoSubscriptionAdmin not found');
+            return null;
+        }
+        return window.iyzicoSubscriptionAdmin;
+    }
+
+    function showNotice(type, message) {
+        // type: success | error | warning | info
+        var cls = 'notice';
+        if (type === 'success') cls += ' notice-success';
+        else if (type === 'error') cls += ' notice-error';
+        else if (type === 'warning') cls += ' notice-warning';
+        else cls += ' notice-info';
+
+        var $notice = $('<div/>', {
+            class: cls + ' is-dismissible',
+            html: '<p>' + message + '</p>'
+        });
+
+        var $container = $('.wrap');
+        if ($container.length) {
+            $container.prepend($notice);
+        } else {
+            $('body').prepend($notice);
+        }
+
+        // WordPress dismissible behavior
+        $notice.on('click', '.notice-dismiss', function() {
+            $notice.remove();
+        });
+    }
+
+    function request(action, data) {
+        var cfg = getConfig();
+        if (!cfg) return $.Deferred().reject('config-missing').promise();
+        var payload = $.extend({
+            action: action,
+            nonce: cfg.nonce
+        }, data || {});
+        return $.post(cfg.ajaxurl, payload, null, 'json');
+    }
+
+    function confirmMessageFor(action) {
+        var cfg = getConfig() || { i18n: {} };
+        var i18n = cfg.i18n || {};
+        // Fallback to generic confirm if specific not provided
+        var defaults = {
+            suspend: i18n.confirmSuspend || i18n.confirmAction || 'Bu işlemi gerçekleştirmek istediğinizden emin misiniz?',
+            cancel: i18n.confirmCancel || i18n.confirmAction || 'Bu işlemi gerçekleştirmek istediğinizden emin misiniz?',
+            reactivate: i18n.confirmReactivate || i18n.confirmAction || 'Bu işlemi gerçekleştirmek istediğinizden emin misiniz?'
+        };
+        return defaults[action] || (i18n.confirmAction || 'Bu işlemi gerçekleştirmek istediğinizden emin misiniz?');
+    }
+
+    function handleIndividualAction($button) {
+        var action = $button.data('action');
+        var subscriptionId = $button.data('subscription-id');
+        if (!action || !subscriptionId) return;
+
+        if (!window.confirm(confirmMessageFor(action))) return;
+
+        var originalHtml = $button.html();
+        $button.prop('disabled', true).html('<span class="spinner is-active" style="float:none;visibility:visible;margin:0"></span>');
+
+        request('iyzico_subscription_admin_action', {
+            subscription_id: subscriptionId,
+            subscription_action: action
+        })
+        .done(function(res) {
+            if (res && res.success) {
+                showNotice('success', (res.data && res.data.message) || 'İşlem başarıyla tamamlandı.');
+                setTimeout(function() { window.location.reload(); }, 800);
+            } else {
+                showNotice('error', (res && res.data && res.data.message) || 'İşlem başarısız oldu.');
+            }
+        })
+        .fail(function() {
+            showNotice('error', 'İşlem sırasında bir hata oluştu.');
+        })
+        .always(function() {
+            $button.prop('disabled', false).html(originalHtml);
+        });
+    }
+
+    function getSelectedIds() {
+        return $('input[name="subscription[]"]:checked').map(function() {
+            return $(this).val();
+        }).get();
+    }
+
+    function handleBulkAction(fromBottom) {
+        var selectId = fromBottom ? '#bulk-action-selector-bottom' : '#bulk-action-selector-top';
+        var action = $(selectId).val();
+        if (!action || action === '-1') {
+            showNotice('warning', 'Lütfen bir toplu işlem seçin.');
+            return;
+        }
+        var ids = getSelectedIds();
+        if (!ids.length) {
+            showNotice('warning', 'Lütfen en az bir abonelik seçin.');
+            return;
+        }
+
+        if (!window.confirm('Seçili ' + ids.length + ' aboneliğe "' + action + '" uygulanacak. Devam etmek istiyor musunuz?')) {
+            return;
+        }
+
+        var completed = 0, successCount = 0;
+        var $buttons = $('#doaction, #doaction2').prop('disabled', true);
+
+        ids.forEach(function(id) {
+            request('iyzico_subscription_admin_action', {
+                subscription_id: id,
+                subscription_action: action
+            })
+            .done(function(res) {
+                if (res && res.success) successCount++;
+            })
+            .always(function() {
+                completed++;
+                if (completed === ids.length) {
+                    $buttons.prop('disabled', false);
+                    var msg = successCount + ' abonelik işlendi';
+                    if (successCount < ids.length) {
+                        msg += ', ' + (ids.length - successCount) + ' abonelikte hata oluştu';
+                        showNotice('warning', msg);
+                    } else {
+                        showNotice('success', msg);
+                    }
+                    setTimeout(function() { window.location.reload(); }, 800);
+                }
+            });
+        });
+    }
+
+    $(document).ready(function() {
+        if (!getConfig()) return;
+
+        // Individual actions (links or buttons with .subscription-action)
+        $(document).on('click', '.subscription-action', function(e) {
+            e.preventDefault();
+            handleIndividualAction($(this));
+        });
+
+        // Bulk actions (native list table controls)
+        $(document).on('click', '#doaction', function(e) {
+            e.preventDefault();
+            handleBulkAction(false);
+        });
+        $(document).on('click', '#doaction2', function(e) {
+            e.preventDefault();
+            handleBulkAction(true);
+        });
+    });
+
+})(jQuery);
+
+/**
  * Iyzico Subscription Admin JavaScript
  * Modern, performanslı ve kullanıcı dostu admin arayüzü
  */
