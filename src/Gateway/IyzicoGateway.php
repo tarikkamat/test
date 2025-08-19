@@ -19,7 +19,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
 
     public function __construct() {
         $this->id = 'iyzico_subscription';
-        $this->icon = '';
+        $this->icon = plugin_dir_url(__FILE__) . '../../assets/img/cards/mastercard-visa-amex.svg';
         $this->has_fields = true;
         $this->method_title = 'iyzico Abonelik';
         $this->method_description = 'iyzico ile abonelik ödemeleri';
@@ -94,14 +94,14 @@ class IyzicoGateway extends WC_Payment_Gateway {
                 'title' => 'Başlık',
                 'type' => 'text',
                 'description' => 'Ödeme sayfasında görünecek başlık',
-                'default' => 'iyzico ile Öde',
+                'default' => 'Kredi Kartı ile Güvenli Ödeme',
                 'desc_tip' => true,
             ],
             'description' => [
                 'title' => 'Açıklama',
                 'type' => 'textarea',
                 'description' => 'Ödeme sayfasında görünecek açıklama',
-                'default' => 'iyzico güvenli ödeme sistemi ile ödeyin',
+                'default' => 'iyzico altyapısı ile kart bilgileriniz güvende. Visa, Mastercard ve Amex ile hızlı ve güvenli ödeme yapın.',
             ],
             'api_key' => [
                 'title' => 'API Anahtarı',
@@ -131,10 +131,10 @@ class IyzicoGateway extends WC_Payment_Gateway {
             $this->form_fields['enabled']['label'] = __('iyzico ödeme geçidini aktifleştir', 'iyzico-subscription');
             $this->form_fields['title']['title'] = __('Başlık', 'iyzico-subscription');
             $this->form_fields['title']['description'] = __('Ödeme sayfasında görünecek başlık', 'iyzico-subscription');
-            $this->form_fields['title']['default'] = __('iyzico ile Öde', 'iyzico-subscription');
+            $this->form_fields['title']['default'] = __('Kredi Kartı ile Güvenli Ödeme', 'iyzico-subscription');
             $this->form_fields['description']['title'] = __('Açıklama', 'iyzico-subscription');
             $this->form_fields['description']['description'] = __('Ödeme sayfasında görünecek açıklama', 'iyzico-subscription');
-            $this->form_fields['description']['default'] = __('iyzico güvenli ödeme sistemi ile ödeyin', 'iyzico-subscription');
+            $this->form_fields['description']['default'] = __('iyzico altyapısı ile kart bilgileriniz güvende. Visa, Mastercard ve Amex ile hızlı ve güvenli ödeme yapın.', 'iyzico-subscription');
             $this->form_fields['api_key']['title'] = __('API Anahtarı', 'iyzico-subscription');
             $this->form_fields['api_key']['description'] = __('iyzico API anahtarınız', 'iyzico-subscription');
             $this->form_fields['secret_key']['title'] = __('Gizli Anahtar', 'iyzico-subscription');
@@ -197,7 +197,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
                     $cancelRequest->setLocale(\Iyzipay\Model\Locale::TR);
                     $cancelRequest->setConversationId($order->get_id() . '_cancel_' . time());
                     $cancelRequest->setPaymentId($checkoutForm->getPaymentId());
-                    $cancelRequest->setIp($_SERVER['REMOTE_ADDR']);
+                    $cancelRequest->setIp(isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '');
 
                     $cancel = \Iyzipay\Model\Cancel::create($cancelRequest, $options);
 
@@ -216,8 +216,9 @@ class IyzicoGateway extends WC_Payment_Gateway {
                         $error_code = $cancel->getErrorCode();
                         
                         // Siparişe not ekle
+                        /* translators: 1: error code, 2: error message */
                         $order->add_order_note(sprintf(
-                            __('Ödeme iptal edilemedi. Hata Kodu: %s, Hata: %s', 'iyzico-subscription'),
+                            __('Ödeme iptal edilemedi. Hata Kodu: %1$s, Hata: %2$s', 'iyzico-subscription'),
                             $error_code,
                             $error_message
                         ));
@@ -253,8 +254,9 @@ class IyzicoGateway extends WC_Payment_Gateway {
 
                 // Siparişi tamamlandı olarak işaretle
                 $order->payment_complete($checkoutForm->getPaymentId());
+                /* translators: 1: payment id */
                 $order->add_order_note(sprintf(
-                    __('iyzico ödemesi tamamlandı. Ödeme ID: %s', 'iyzico-subscription'),
+                    __('iyzico ödemesi tamamlandı. Ödeme ID: %1$s', 'iyzico-subscription'),
                     $checkoutForm->getPaymentId()
                 ));
 
@@ -365,7 +367,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
         $buyer->setRegistrationAddress($order->get_billing_address_1());
         $buyer->setCity($order->get_billing_city());
         $buyer->setCountry($order->get_billing_country());
-        $buyer->setIp($_SERVER['REMOTE_ADDR']);
+        $buyer->setIp(isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '');
         $request->setBuyer($buyer);
 
         $shippingAddress = new \Iyzipay\Model\Address();
@@ -469,18 +471,20 @@ class IyzicoGateway extends WC_Payment_Gateway {
         $customer_email = $order->get_billing_email();
         $customer_name = $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
         
-        $subject = sprintf(__('Aboneliğiniz Başarıyla Başlatıldı - Sipariş #%s', 'iyzico-subscription'), $order->get_id());
+        /* translators: 1: order id */
+        $subject = sprintf(__('Aboneliğiniz Başarıyla Başlatıldı - Sipariş #%1$s', 'iyzico-subscription'), $order->get_id());
         
+        /* translators: 1: customer name, 2: order id, 3: total, 4: payment method, 5: account subscriptions url */
         $message = sprintf(
-            __('Merhaba %s,
+            __('Merhaba %1$s,
 
 Aboneliğiniz başarıyla başlatıldı. Sipariş detaylarınız aşağıdaki gibidir:
 
-Sipariş Numarası: #%s
-Toplam Tutar: %s
-Ödeme Yöntemi: %s
+Sipariş Numarası: #%2$s
+Toplam Tutar: %3$s
+Ödeme Yöntemi: %4$s
 
-Aboneliğinizi yönetmek için hesabınıza giriş yapabilirsiniz: %s
+Aboneliğinizi yönetmek için hesabınıza giriş yapabilirsiniz: %5$s
 
 Teşekkür ederiz.',
             'iyzico-subscription'),
@@ -504,16 +508,16 @@ Teşekkür ederiz.',
         
         switch ($period) {
             case 'day':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 day'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 day'));
                 break;
             case 'week':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 week'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 week'));
                 break;
             case 'month':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 month'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 month'));
                 break;
             case 'year':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 year'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 year'));
                 break;
         }
         
@@ -535,8 +539,9 @@ Teşekkür ederiz.',
                     break;
                     
                 case 'cancel_failed':
+                    /* translators: 1: error code, 2: error message */
                     $display_message = sprintf(
-                        __('Ödeme iptal edilemedi. Hata Kodu: %s, Hata: %s', 'iyzico-subscription'),
+                        __('Ödeme iptal edilemedi. Hata Kodu: %1$s, Hata: %2$s', 'iyzico-subscription'),
                         $error_code,
                         $error_message
                     );
@@ -547,8 +552,9 @@ Teşekkür ederiz.',
                     break;
                     
                 case 'general_error':
+                    /* translators: 1: error message */
                     $display_message = sprintf(
-                        __('İşlem sırasında bir hata oluştu: %s', 'iyzico-subscription'),
+                        __('İşlem sırasında bir hata oluştu: %1$s', 'iyzico-subscription'),
                         $error_message
                     );
                     break;

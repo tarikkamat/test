@@ -169,7 +169,8 @@ class SubscriptionAdminController {
 
             if ($cardList->getStatus() !== 'success') {
                 $error = method_exists($cardList, 'getErrorMessage') ? $cardList->getErrorMessage() : __('Bilinmeyen hata', 'iyzico-subscription');
-                wp_send_json_error(['message' => sprintf(__('Kartlar alınamadı: %s', 'iyzico-subscription'), $error)]);
+                /* translators: 1: error message */
+                wp_send_json_error(['message' => sprintf(__('Kartlar alınamadı: %1$s', 'iyzico-subscription'), $error)]);
             }
 
             $details = $cardList->getCardDetails() ?: [];
@@ -249,7 +250,8 @@ class SubscriptionAdminController {
 
             if ($card->getStatus() !== 'success') {
                 $error = method_exists($card, 'getErrorMessage') ? $card->getErrorMessage() : __('Bilinmeyen hata', 'iyzico-subscription');
-                wp_send_json_error(['message' => sprintf(__('Kart oluşturulamadı: %s', 'iyzico-subscription'), $error)]);
+                /* translators: 1: error message */
+                wp_send_json_error(['message' => sprintf(__('Kart oluşturulamadı: %1$s', 'iyzico-subscription'), $error)]);
             }
 
             // Persist card user key and last token

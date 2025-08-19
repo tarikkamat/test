@@ -29,7 +29,7 @@ class AccountService implements AccountServiceInterface
         $user_subscriptions = $this->subscriptionRepository->findByUser(get_current_user_id());
         
         if (empty($user_subscriptions)) {
-            echo '<p>' . __('Henüz aktif aboneliğiniz bulunmamaktadır.', 'iyzico-subscription') . '</p>';
+            echo '<p>' . esc_html__('Henüz aktif aboneliğiniz bulunmamaktadır.', 'iyzico-subscription') . '</p>';
             return;
         }
 
@@ -37,12 +37,12 @@ class AccountService implements AccountServiceInterface
         echo '<table class="woocommerce-orders-table shop_table shop_table_responsive">';
         echo '<thead>';
         echo '<tr>';
-        echo '<th>' . __('Ürün', 'iyzico-subscription') . '</th>';
-        echo '<th>' . __('Durum', 'iyzico-subscription') . '</th>';
-        echo '<th>' . __('Başlangıç Tarihi', 'iyzico-subscription') . '</th>';
-        echo '<th>' . __('Sonraki Ödeme', 'iyzico-subscription') . '</th>';
-        echo '<th>' . __('Tutar', 'iyzico-subscription') . '</th>';
-        echo '<th>' . __('İşlemler', 'iyzico-subscription') . '</th>';
+        echo '<th>' . esc_html__('Ürün', 'iyzico-subscription') . '</th>';
+        echo '<th>' . esc_html__('Durum', 'iyzico-subscription') . '</th>';
+        echo '<th>' . esc_html__('Başlangıç Tarihi', 'iyzico-subscription') . '</th>';
+        echo '<th>' . esc_html__('Sonraki Ödeme', 'iyzico-subscription') . '</th>';
+        echo '<th>' . esc_html__('Tutar', 'iyzico-subscription') . '</th>';
+        echo '<th>' . esc_html__('İşlemler', 'iyzico-subscription') . '</th>';
         echo '</tr>';
         echo '</thead>';
         echo '<tbody>';
@@ -52,11 +52,11 @@ class AccountService implements AccountServiceInterface
             if (!$product) continue;
 
             echo '<tr>';
-            echo '<td>' . $product->get_name() . '</td>';
-            echo '<td>' . $this->getStatusLabel($subscription->status) . '</td>';
-            echo '<td>' . date_i18n(get_option('date_format'), strtotime($subscription->start_date)) . '</td>';
-            echo '<td>' . date_i18n(get_option('date_format'), strtotime($subscription->next_payment_date)) . '</td>';
-            echo '<td>' . wc_price($subscription->amount) . '</td>';
+            echo '<td>' . esc_html($product->get_name()) . '</td>';
+            echo '<td>' . esc_html($this->getStatusLabel($subscription->status)) . '</td>';
+            echo '<td>' . esc_html(date_i18n(get_option('date_format'), strtotime($subscription->start_date))) . '</td>';
+            echo '<td>' . esc_html(date_i18n(get_option('date_format'), strtotime($subscription->next_payment_date))) . '</td>';
+            echo '<td>' . wp_kses_post(wc_price($subscription->amount)) . '</td>';
             echo '<td>';
             $this->renderSubscriptionActions($subscription);
             echo '</td>';
@@ -74,7 +74,7 @@ class AccountService implements AccountServiceInterface
             $('.iyzico-subscription-action').on('click', function(e) {
                 e.preventDefault();
                 
-                if (!confirm('<?php _e('Bu işlemi gerçekleştirmek istediğinizden emin misiniz?', 'iyzico-subscription'); ?>')) {
+                if (!confirm('<?php echo esc_js(__('Bu işlemi gerçekleştirmek istediğinizden emin misiniz?', 'iyzico-subscription')); ?>')) {
                     return;
                 }
 
@@ -91,7 +91,7 @@ class AccountService implements AccountServiceInterface
                         action: 'iyzico_subscription_action',
                         subscription_id: subscriptionId,
                         subscription_action: action,
-                        nonce: '<?php echo wp_create_nonce('iyzico_subscription_action'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('iyzico_subscription_action')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -101,7 +101,7 @@ class AccountService implements AccountServiceInterface
                         }
                     },
                     error: function() {
-                        alert('<?php _e('Bir hata oluştu. Lütfen tekrar deneyin.', 'iyzico-subscription'); ?>');
+                        alert('<?php echo esc_js(__('Bir hata oluştu. Lütfen tekrar deneyin.', 'iyzico-subscription')); ?>');
                     },
                     complete: function() {
                         $button.prop('disabled', false);

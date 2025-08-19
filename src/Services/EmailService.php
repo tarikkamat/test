@@ -29,15 +29,16 @@ class EmailService implements EmailServiceInterface
         $user = get_user_by('id', $subscription->user_id);
         $product = get_post($subscription->product_id);
         
-        $subject = sprintf(__('Aboneliğiniz Oluşturuldu - %s', 'iyzico-subscription'), $product->post_title);
+        /* translators: 1: product title */
+        $subject = sprintf(__('Aboneliğiniz Oluşturuldu - %1$s', 'iyzico-subscription'), $product->post_title);
         
         $template_data = [
             'user_name' => $user->display_name,
             'product_name' => $product->post_title,
             'amount' => wc_price($subscription->amount),
             'period' => $this->templateService->getPeriodLabel($subscription->period),
-            'start_date' => date('d.m.Y', strtotime($subscription->start_date)),
-            'next_payment' => date('d.m.Y', strtotime($subscription->next_payment)),
+            'start_date' => gmdate('d.m.Y', strtotime($subscription->start_date)),
+            'next_payment' => gmdate('d.m.Y', strtotime($subscription->next_payment)),
             'subscription_id' => $subscription->id,
         ];
         
@@ -57,14 +58,15 @@ class EmailService implements EmailServiceInterface
         $user = get_user_by('id', $subscription->user_id);
         $product = get_post($subscription->product_id);
         
-        $subject = sprintf(__('Aboneliğiniz Yenilendi - %s', 'iyzico-subscription'), $product->post_title);
+        /* translators: 1: product title */
+        $subject = sprintf(__('Aboneliğiniz Yenilendi - %1$s', 'iyzico-subscription'), $product->post_title);
         
         $template_data = [
             'user_name' => $user->display_name,
             'product_name' => $product->post_title,
             'amount' => wc_price($subscription->amount),
-            'payment_date' => date('d.m.Y'),
-            'next_payment' => date('d.m.Y', strtotime($subscription->next_payment)),
+            'payment_date' => gmdate('d.m.Y'),
+            'next_payment' => gmdate('d.m.Y', strtotime($subscription->next_payment)),
             'subscription_id' => $subscription->id,
         ];
         
@@ -81,14 +83,15 @@ class EmailService implements EmailServiceInterface
         $user = get_user_by('id', $subscription->user_id);
         $product = get_post($subscription->product_id);
         
-        $subject = sprintf(__('Abonelik Ödeme Hatası - %s', 'iyzico-subscription'), $product->post_title);
+        /* translators: 1: product title */
+        $subject = sprintf(__('Abonelik Ödeme Hatası - %1$s', 'iyzico-subscription'), $product->post_title);
         
         $template_data = [
             'user_name' => $user->display_name,
             'product_name' => $product->post_title,
             'amount' => wc_price($subscription->amount),
             'error_message' => $error,
-            'retry_date' => date('d.m.Y', strtotime('+3 days')),
+            'retry_date' => gmdate('d.m.Y', strtotime('+3 days')),
             'subscription_id' => $subscription->id,
             'account_url' => wc_get_account_endpoint_url('subscriptions'),
         ];
@@ -109,12 +112,13 @@ class EmailService implements EmailServiceInterface
         $user = get_user_by('id', $subscription->user_id);
         $product = get_post($subscription->product_id);
         
-        $subject = sprintf(__('Aboneliğiniz İptal Edildi - %s', 'iyzico-subscription'), $product->post_title);
+        /* translators: 1: product title */
+        $subject = sprintf(__('Aboneliğiniz İptal Edildi - %1$s', 'iyzico-subscription'), $product->post_title);
         
         $template_data = [
             'user_name' => $user->display_name,
             'product_name' => $product->post_title,
-            'cancellation_date' => date('d.m.Y'),
+            'cancellation_date' => gmdate('d.m.Y'),
             'subscription_id' => $subscription->id,
         ];
         
@@ -131,12 +135,13 @@ class EmailService implements EmailServiceInterface
         $user = get_user_by('id', $subscription->user_id);
         $product = get_post($subscription->product_id);
         
-        $subject = sprintf(__('Aboneliğiniz Askıya Alındı - %s', 'iyzico-subscription'), $product->post_title);
+        /* translators: 1: product title */
+        $subject = sprintf(__('Aboneliğiniz Askıya Alındı - %1$s', 'iyzico-subscription'), $product->post_title);
         
         $template_data = [
             'user_name' => $user->display_name,
             'product_name' => $product->post_title,
-            'suspension_date' => date('d.m.Y'),
+            'suspension_date' => gmdate('d.m.Y'),
             'failed_payments' => $subscription->failed_payments,
             'subscription_id' => $subscription->id,
             'account_url' => wc_get_account_endpoint_url('subscriptions'),
@@ -155,12 +160,13 @@ class EmailService implements EmailServiceInterface
         $user = get_user_by('id', $subscription->user_id);
         $product = get_post($subscription->product_id);
         
-        $subject = sprintf(__('Aboneliğiniz Yakında Sona Eriyor - %s', 'iyzico-subscription'), $product->post_title);
+        /* translators: 1: product title */
+        $subject = sprintf(__('Aboneliğiniz Yakında Sona Eriyor - %1$s', 'iyzico-subscription'), $product->post_title);
         
         $template_data = [
             'user_name' => $user->display_name,
             'product_name' => $product->post_title,
-            'expiry_date' => date('d.m.Y', strtotime($subscription->end_date)),
+            'expiry_date' => gmdate('d.m.Y', strtotime($subscription->end_date)),
             'days_remaining' => $this->templateService->getDaysUntilExpiry($subscription->end_date),
             'subscription_id' => $subscription->id,
             'renewal_url' => wc_get_account_endpoint_url('subscriptions'),
@@ -177,9 +183,11 @@ class EmailService implements EmailServiceInterface
         
         switch ($type) {
             case 'new_subscription':
-                $subject = sprintf(__('[%s] Yeni Abonelik Oluşturuldu', 'iyzico-subscription'), $site_name);
+                /* translators: 1: site name */
+                $subject = sprintf(__('[%1$s] Yeni Abonelik Oluşturuldu', 'iyzico-subscription'), $site_name);
+                /* translators: 1: sub id, 2: customer, 3: product, 4: amount */
                 $message = sprintf(
-                    __('Yeni bir abonelik oluşturuldu:\n\nAbonelik ID: %d\nMüşteri: %s\nÜrün: %s\nTutar: %s\n\nYönetim panelinden detayları görüntüleyebilirsiniz.', 'iyzico-subscription'),
+                    __('Yeni bir abonelik oluşturuldu:\n\nAbonelik ID: %1$d\nMüşteri: %2$s\nÜrün: %3$s\nTutar: %4$s\n\nYönetim panelinden detayları görüntüleyebilirsiniz.', 'iyzico-subscription'),
                     $subscription->id,
                     get_user_by('id', $subscription->user_id)->display_name,
                     get_the_title($subscription->product_id),
@@ -188,9 +196,11 @@ class EmailService implements EmailServiceInterface
                 break;
                 
             case 'payment_failed':
-                $subject = sprintf(__('[%s] Abonelik Ödeme Hatası', 'iyzico-subscription'), $site_name);
+                /* translators: 1: site name */
+                $subject = sprintf(__('[%1$s] Abonelik Ödeme Hatası', 'iyzico-subscription'), $site_name);
+                /* translators: 1: sub id, 2: customer, 3: product, 4: error */
                 $message = sprintf(
-                    __('Abonelik ödemesi başarısız oldu:\n\nAbonelik ID: %d\nMüşteri: %s\nÜrün: %s\nHata: %s\n\nLütfen kontrol edin.', 'iyzico-subscription'),
+                    __('Abonelik ödemesi başarısız oldu:\n\nAbonelik ID: %1$d\nMüşteri: %2$s\nÜrün: %3$s\nHata: %4$s\n\nLütfen kontrol edin.', 'iyzico-subscription'),
                     $subscription->id,
                     get_user_by('id', $subscription->user_id)->display_name,
                     get_the_title($subscription->product_id),

@@ -10,91 +10,91 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div class="woocommerce-account-subscriptions">
-    <h2><?php _e('Aboneliklerim', 'iyzico-subscription'); ?></h2>
+    <h2><?php esc_html_e('Aboneliklerim', 'iyzico-subscription'); ?></h2>
     
     <?php if (!empty($user_subscriptions)): ?>
         <table class="woocommerce-orders-table woocommerce-MyAccount-orders shop_table shop_table_responsive my_account_orders account-orders-table">
             <thead>
                 <tr>
-                    <th class="subscription-id"><?php _e('Abonelik', 'iyzico-subscription'); ?></th>
-                    <th class="subscription-status"><?php _e('Durum', 'iyzico-subscription'); ?></th>
-                    <th class="subscription-next-payment"><?php _e('Sonraki Ödeme', 'iyzico-subscription'); ?></th>
-                    <th class="subscription-total"><?php _e('Toplam', 'iyzico-subscription'); ?></th>
-                    <th class="subscription-actions"><?php _e('İşlemler', 'iyzico-subscription'); ?></th>
+                    <th class="subscription-id"><?php esc_html_e('Abonelik', 'iyzico-subscription'); ?></th>
+                    <th class="subscription-status"><?php esc_html_e('Durum', 'iyzico-subscription'); ?></th>
+                    <th class="subscription-next-payment"><?php esc_html_e('Sonraki Ödeme', 'iyzico-subscription'); ?></th>
+                    <th class="subscription-total"><?php esc_html_e('Toplam', 'iyzico-subscription'); ?></th>
+                    <th class="subscription-actions"><?php esc_html_e('İşlemler', 'iyzico-subscription'); ?></th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($user_subscriptions as $subscription): ?>
                     <tr class="subscription">
-                        <td class="subscription-id" data-title="<?php _e('Abonelik', 'iyzico-subscription'); ?>">
-                            <a href="#subscription-<?php echo $subscription->id; ?>" class="subscription-link">
-                                #<?php echo $subscription->id; ?>
+                        <td class="subscription-id" data-title="<?php echo esc_attr__('Abonelik', 'iyzico-subscription'); ?>">
+                            <a href="#subscription-<?php echo esc_attr($subscription->id); ?>" class="subscription-link">
+                                #<?php echo esc_html($subscription->id); ?>
                             </a>
                             <br>
-                            <small><?php echo get_the_title($subscription->product_id); ?></small>
+                            <small><?php echo esc_html(get_the_title($subscription->product_id)); ?></small>
                         </td>
-                        <td class="subscription-status" data-title="<?php _e('Durum', 'iyzico-subscription'); ?>">
-                            <span class="status-<?php echo $subscription->status; ?>">
-                                <?php echo $this->get_status_label($subscription->status); ?>
+                        <td class="subscription-status" data-title="<?php echo esc_attr__('Durum', 'iyzico-subscription'); ?>">
+                            <span class="status-<?php echo esc_attr($subscription->status); ?>">
+                                <?php echo esc_html($this->get_status_label($subscription->status)); ?>
                             </span>
                         </td>
-                        <td class="subscription-next-payment" data-title="<?php _e('Sonraki Ödeme', 'iyzico-subscription'); ?>">
+                        <td class="subscription-next-payment" data-title="<?php echo esc_attr__('Sonraki Ödeme', 'iyzico-subscription'); ?>">
                             <?php if ($subscription->status === 'active'): ?>
-                                <?php echo date('d.m.Y', strtotime($subscription->next_payment)); ?>
+                                <?php echo esc_html(gmdate('d.m.Y', strtotime($subscription->next_payment))); ?>
                             <?php else: ?>
                                 -
                             <?php endif; ?>
                         </td>
-                        <td class="subscription-total" data-title="<?php _e('Toplam', 'iyzico-subscription'); ?>">
-                            <?php echo wc_price($subscription->amount); ?>
-                            <small>/ <?php echo $this->get_period_label($subscription->period); ?></small>
+                        <td class="subscription-total" data-title="<?php echo esc_attr__('Toplam', 'iyzico-subscription'); ?>">
+                            <?php echo wp_kses_post(wc_price($subscription->amount)); ?>
+                            <small>/ <?php echo esc_html($this->get_period_label($subscription->period)); ?></small>
                         </td>
-                        <td class="subscription-actions" data-title="<?php _e('İşlemler', 'iyzico-subscription'); ?>">
+                        <td class="subscription-actions" data-title="<?php echo esc_attr__('İşlemler', 'iyzico-subscription'); ?>">
                             <?php if ($subscription->status === 'active'): ?>
-                                <a href="#" class="button suspend-subscription" data-subscription-id="<?php echo $subscription->id; ?>">
-                                    <?php _e('Askıya Al', 'iyzico-subscription'); ?>
+                                <a href="#" class="button suspend-subscription" data-subscription-id="<?php echo esc_attr($subscription->id); ?>">
+                                    <?php esc_html_e('Askıya Al', 'iyzico-subscription'); ?>
                                 </a>
-                                <a href="#" class="button cancel-subscription" data-subscription-id="<?php echo $subscription->id; ?>">
-                                    <?php _e('İptal Et', 'iyzico-subscription'); ?>
+                                <a href="#" class="button cancel-subscription" data-subscription-id="<?php echo esc_attr($subscription->id); ?>">
+                                    <?php esc_html_e('İptal Et', 'iyzico-subscription'); ?>
                                 </a>
                             <?php elseif ($subscription->status === 'suspended'): ?>
-                                <a href="#" class="button reactivate-subscription" data-subscription-id="<?php echo $subscription->id; ?>">
-                                    <?php _e('Yeniden Aktifleştir', 'iyzico-subscription'); ?>
+                                <a href="#" class="button reactivate-subscription" data-subscription-id="<?php echo esc_attr($subscription->id); ?>">
+                                    <?php esc_html_e('Yeniden Aktifleştir', 'iyzico-subscription'); ?>
                                 </a>
                             <?php endif; ?>
                         </td>
                     </tr>
                     
                     <!-- Abonelik Detayları -->
-                    <tr id="subscription-<?php echo $subscription->id; ?>" class="subscription-details" style="display: none;">
+                    <tr id="subscription-<?php echo esc_attr($subscription->id); ?>" class="subscription-details" style="display: none;">
                         <td colspan="5">
                             <div class="subscription-detail-content">
-                                <h4><?php _e('Abonelik Detayları', 'iyzico-subscription'); ?></h4>
+                                <h4><?php esc_html_e('Abonelik Detayları', 'iyzico-subscription'); ?></h4>
                                 <div class="subscription-info">
                                     <div class="info-row">
-                                        <strong><?php _e('Başlangıç Tarihi:', 'iyzico-subscription'); ?></strong>
-                                        <?php echo date('d.m.Y H:i', strtotime($subscription->start_date)); ?>
+                                        <strong><?php esc_html_e('Başlangıç Tarihi:', 'iyzico-subscription'); ?></strong>
+                                        <?php echo esc_html(gmdate('d.m.Y H:i', strtotime($subscription->start_date))); ?>
                                     </div>
                                     <div class="info-row">
-                                        <strong><?php _e('Periyot:', 'iyzico-subscription'); ?></strong>
-                                        <?php echo $this->get_period_label($subscription->period); ?>
+                                        <strong><?php esc_html_e('Periyot:', 'iyzico-subscription'); ?></strong>
+                                        <?php echo esc_html($this->get_period_label($subscription->period)); ?>
                                     </div>
                                     <?php if ($subscription->billing_cycles > 0): ?>
                                         <div class="info-row">
-                                            <strong><?php _e('Döngü:', 'iyzico-subscription'); ?></strong>
-                                            <?php echo $subscription->completed_cycles; ?> / <?php echo $subscription->billing_cycles; ?>
+                                            <strong><?php esc_html_e('Döngü:', 'iyzico-subscription'); ?></strong>
+                                            <?php echo esc_html($subscription->completed_cycles); ?> / <?php echo esc_html($subscription->billing_cycles); ?>
                                         </div>
                                     <?php endif; ?>
                                     <?php if ($subscription->failed_payments > 0): ?>
                                         <div class="info-row">
-                                            <strong><?php _e('Başarısız Ödemeler:', 'iyzico-subscription'); ?></strong>
-                                            <?php echo $subscription->failed_payments; ?>
+                                            <strong><?php esc_html_e('Başarısız Ödemeler:', 'iyzico-subscription'); ?></strong>
+                                            <?php echo esc_html($subscription->failed_payments); ?>
                                         </div>
                                     <?php endif; ?>
                                     <?php if ($subscription->end_date): ?>
                                         <div class="info-row">
-                                            <strong><?php _e('Bitiş Tarihi:', 'iyzico-subscription'); ?></strong>
-                                            <?php echo date('d.m.Y H:i', strtotime($subscription->end_date)); ?>
+                                            <strong><?php esc_html_e('Bitiş Tarihi:', 'iyzico-subscription'); ?></strong>
+                                            <?php echo esc_html(gmdate('d.m.Y H:i', strtotime($subscription->end_date))); ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -106,7 +106,7 @@ if (!defined('ABSPATH')) {
         </table>
     <?php else: ?>
         <div class="woocommerce-message woocommerce-message--info woocommerce-Message woocommerce-Message--info woocommerce-info">
-            <?php _e('Henüz hiç aboneliğiniz bulunmamaktadır.', 'iyzico-subscription'); ?>
+            <?php esc_html_e('Henüz hiç aboneliğiniz bulunmamaktadır.', 'iyzico-subscription'); ?>
         </div>
     <?php endif; ?>
 </div>
@@ -163,36 +163,36 @@ jQuery(document).ready(function($) {
         
         if ($(this).hasClass('suspend-subscription')) {
             action = 'suspend';
-            confirmMessage = '<?php _e('Aboneliği askıya almak istediğinizden emin misiniz?', 'iyzico-subscription'); ?>';
+            confirmMessage = '<?php echo esc_js(__('Aboneliği askıya almak istediğinizden emin misiniz?', 'iyzico-subscription')); ?>';
         } else if ($(this).hasClass('cancel-subscription')) {
             action = 'cancel';
-            confirmMessage = '<?php _e('Aboneliği iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.', 'iyzico-subscription'); ?>';
+            confirmMessage = '<?php echo esc_js(__('Aboneliği iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.', 'iyzico-subscription')); ?>';
         } else if ($(this).hasClass('reactivate-subscription')) {
             action = 'reactivate';
-            confirmMessage = '<?php _e('Aboneliği yeniden aktifleştirmek istediğinizden emin misiniz?', 'iyzico-subscription'); ?>';
+            confirmMessage = '<?php echo esc_js(__('Aboneliği yeniden aktifleştirmek istediğinizden emin misiniz?', 'iyzico-subscription')); ?>';
         }
         
         if (confirm(confirmMessage)) {
             var subscriptionId = $(this).data('subscription-id');
             
             $.ajax({
-                url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                url: '<?php echo esc_url(admin_url('admin-ajax.php')); ?>',
                 type: 'POST',
                 data: {
                     action: 'iyzico_subscription_action',
                     subscription_id: subscriptionId,
                     subscription_action: action,
-                    nonce: '<?php echo wp_create_nonce('iyzico_subscription_action'); ?>'
+                    nonce: '<?php echo esc_attr(wp_create_nonce('iyzico_subscription_action')); ?>'
                 },
                 success: function(response) {
                     if (response.success) {
                         location.reload();
                     } else {
-                        alert(response.data.message || '<?php _e('Bir hata oluştu.', 'iyzico-subscription'); ?>');
+                        alert(response.data.message || '<?php echo esc_js(__('Bir hata oluştu.', 'iyzico-subscription')); ?>');
                     }
                 },
                 error: function() {
-                    alert('<?php _e('Bir hata oluştu.', 'iyzico-subscription'); ?>');
+                    alert('<?php echo esc_js(__('Bir hata oluştu.', 'iyzico-subscription')); ?>');
                 }
             });
         }
@@ -210,7 +210,7 @@ function get_status_label($status) {
         'suspended' => __('Askıda', 'iyzico-subscription'),
         'completed' => __('Tamamlandı', 'iyzico-subscription'),
     ];
-    return $labels[$status] ?? $status;
+    return isset($labels[$status]) ? $labels[$status] : $status;
 }
 
 function get_period_label($period) {
@@ -220,6 +220,6 @@ function get_period_label($period) {
         'month' => __('Aylık', 'iyzico-subscription'),
         'year' => __('Yıllık', 'iyzico-subscription'),
     ];
-    return $labels[$period] ?? $period;
+    return isset($labels[$period]) ? $labels[$period] : $period;
 }
-?> 
+?>

@@ -41,7 +41,7 @@ class ProductService implements ProductServiceInterface
             <?php
             // Fiyat alanı
             $price_label = (did_action('init') && function_exists('__')) ? 
-                __('Normal Fiyat', 'woocommerce') . ' (' . get_woocommerce_currency_symbol() . ')' : 
+                __('Normal Fiyat', 'iyzico-subscription') . ' (' . get_woocommerce_currency_symbol() . ')' : 
                 'Normal Fiyat (' . get_woocommerce_currency_symbol() . ')';
                 
             woocommerce_wp_text_input([
