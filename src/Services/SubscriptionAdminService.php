@@ -46,13 +46,16 @@ class SubscriptionAdminService implements SubscriptionAdminServiceInterface
     }
 
     public function getSubscriptionsData(array $filters = []): array {
-        $subscriptions = $this->subscriptionRepository->findAll();
-        $stats = $this->subscriptionRepository->getSubscriptionStats();
-
-        // Filtreleme
-        if (!empty($filters['status'])) {
-            $subscriptions = $this->subscriptionRepository->findByStatus($filters['status']);
+        // Determine if any filters are active
+        $hasFilters = false;
+        foreach (['status', 'customer_search', 'date_from', 'date_to'] as $key) {
+            if (!empty($filters[$key])) { $hasFilters = true; break; }
         }
+
+        $subscriptions = $hasFilters
+            ? $this->subscriptionRepository->findByFilters($filters)
+            : $this->subscriptionRepository->findAll();
+        $stats = $this->subscriptionRepository->getSubscriptionStats();
 
         return [
             'subscriptions' => $subscriptions,

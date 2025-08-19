@@ -10,6 +10,7 @@ interface SubscriptionRepositoryInterface
     public function findByUser(int $user_id): array;
     public function findAll(): array;
     public function findByStatus(string $status): array;
+    public function findByFilters(array $filters): array;
     public function findDueRenewals(): array;
     public function updateStatus(int $id, string $status): bool;
     public function suspend(int $id): bool;

@@ -6,20 +6,11 @@ use Iyzico\IyzipayWoocommerceSubscription\Services\SubscriptionAdminService;
 
 class SubscriptionAdminView {
     private SubscriptionAdminService $service;
-    private SubscriptionTableRenderer $tableRenderer;
-    private SubscriptionStatsRenderer $statsRenderer;
-    private SubscriptionFiltersRenderer $filtersRenderer;
 
     public function __construct(
-        SubscriptionAdminService $service,
-        SubscriptionTableRenderer $tableRenderer,
-        SubscriptionStatsRenderer $statsRenderer,
-        SubscriptionFiltersRenderer $filtersRenderer
+        SubscriptionAdminService $service
     ) {
         $this->service = $service;
-        $this->tableRenderer = $tableRenderer;
-        $this->statsRenderer = $statsRenderer;
-        $this->filtersRenderer = $filtersRenderer;
     }
 
     public function enqueue_admin_assets(): void {
@@ -39,6 +30,8 @@ class SubscriptionAdminView {
 
         // Components styles
         wp_enqueue_style('wp-components');
+        // Dashicons for icons in Gutenberg table/actions
+        wp_enqueue_style('dashicons');
 
         // Gutenberg/Block Editor dependencies
         $deps = [

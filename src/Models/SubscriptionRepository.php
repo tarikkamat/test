@@ -119,6 +119,56 @@ class SubscriptionRepository implements SubscriptionRepositoryInterface
         ));
     }
 
+    public function findByFilters(array $filters): array
+    {
+        $where = [];
+        $params = [];
+        $join_users = false;
+
+        // Status filter
+        if (!empty($filters['status'])) {
+            $where[] = 's.status = %s';
+            $params[] = $filters['status'];
+        }
+
+        // Customer search (display name or email)
+        if (!empty($filters['customer_search'])) {
+            $join_users = true;
+            $where[] = '(u.display_name LIKE %s OR u.user_email LIKE %s)';
+            $like = '%' . $this->wpdb->esc_like($filters['customer_search']) . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        // Date range filters (by start_date)
+        if (!empty($filters['date_from'])) {
+            $where[] = 'DATE(s.start_date) >= %s';
+            $params[] = $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $where[] = 'DATE(s.start_date) <= %s';
+            $params[] = $filters['date_to'];
+        }
+
+        $where_sql = '';
+        if (!empty($where)) {
+            $where_sql = 'WHERE ' . implode(' AND ', $where);
+        }
+
+        $users_table = $this->wpdb->users;
+        $join_sql = $join_users ? "INNER JOIN $users_table u ON u.ID = s.user_id" : '';
+
+        $sql = "SELECT s.* FROM $this->table_name s $join_sql $where_sql ORDER BY s.created_at DESC";
+
+        if (!empty($params)) {
+            // Prepare with parameters
+            $prepared = $this->wpdb->prepare($sql, $params);
+            return $this->wpdb->get_results($prepared);
+        }
+
+        return $this->wpdb->get_results($sql);
+    }
+
     public function findDueRenewals(): array
     {
         return $this->wpdb->get_results(
