@@ -63,6 +63,7 @@ class HookService implements HookServiceInterface
         add_action('init', [$this->accountService, 'addAccountEndpoints']);
         add_filter('woocommerce_account_menu_items', [$this->accountService, 'addAccountMenuItems']);
         add_action('woocommerce_account_subscriptions_endpoint', [$this->accountService, 'renderSubscriptionsAccountPage']);
+        add_action('woocommerce_account_saved-cards_endpoint', [$this->accountService, 'renderSavedCardsAccountPage']);
     }
 
     public function registerPaymentHooks(): void
@@ -87,6 +88,10 @@ class HookService implements HookServiceInterface
         // AJAX işlemleri
         add_action('wp_ajax_iyzico_subscription_action', [$this, 'handleSubscriptionAction']);
         add_action('wp_ajax_nopriv_iyzico_subscription_action', [$this, 'handleSubscriptionAction']);
+
+        // Kayıtlı kartlar AJAX
+        add_action('wp_ajax_iyzico_list_saved_cards', [$this->accountService, 'ajaxListSavedCards']);
+        add_action('wp_ajax_iyzico_delete_saved_card', [$this->accountService, 'ajaxDeleteSavedCard']);
     }
 
     public function handleSubscriptionAction(): void
@@ -117,5 +122,13 @@ class HookService implements HookServiceInterface
         } else {
             wp_send_json_error(['message' => __('İşlem başarısız oldu.', 'iyzico-subscription')]);
         }
+    }
+
+    public function registerPluginHooks(): void
+    {
+        // Aktivasyonda veritabanı tablolarını oluştur
+        add_action('iyzico_subscription_activate', [$this->pluginService, 'createDatabaseTables']);
+        // Yükleme sonrasında da sürüm kontrolü
+        add_action('plugins_loaded', [$this->pluginService, 'createDatabaseTables']);
     }
 }

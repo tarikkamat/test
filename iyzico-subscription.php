@@ -4,7 +4,7 @@
  * Plugin Name: iyzico Subscription for WooCommerce
  * Plugin URI: https://www.iyzico.com
  * Description: WooCommerce için iyzico Abonelik Eklentisi
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: iyzico
  * Author URI: https://www.iyzico.com
  * Text Domain: iyzico-subscription

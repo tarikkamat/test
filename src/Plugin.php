@@ -51,6 +51,7 @@ class Plugin {
         $this->initHookService();
         
         // Tüm hook'ları kaydet
+        $this->hookService->registerPluginHooks();
         $this->hookService->registerProductHooks();
         $this->hookService->registerTemplateHooks();
         $this->hookService->registerAccountHooks();

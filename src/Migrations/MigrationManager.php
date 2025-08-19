@@ -33,7 +33,7 @@ class MigrationManager {
         $this->migrations = [
             '1.0.0' => new Migration_1_0_0(),
             '1.0.1' => new Migration_1_0_1(),
-            // '1.1.0' => new Migration_1_1_0(),
+            '1.1.0' => new Migration_1_1_0(),
         ];
     }
 
