@@ -106,16 +106,18 @@ class WC_Product_Subscription extends \WC_Product {
             if (!function_exists('__') || !did_action('init')) {
                 $length_text = sprintf(' (%d %s)', $length, $period_text);
             } else {
-                $length_text = sprintf(__(' (%d %s)', 'iyzico-subscription'), $length, $period_text);
+                /* translators: 1: length, 2: period text */
+                $length_text = sprintf(__(' (%1$d %2$s)', 'iyzico-subscription'), $length, $period_text);
             }
         } else {
             if (!function_exists('__') || !did_action('init')) {
                 $length_text = sprintf(' (Süresiz %s)', $period_text);
             } else {
-                $length_text = sprintf(__(' (Süresiz %s)', 'iyzico-subscription'), $period_text);
+                /* translators: 1: period text */
+                $length_text = sprintf(__(' (Süresiz %1$s)', 'iyzico-subscription'), $period_text);
             }
         }
 
-        return wc_price($price) . $length_text;
+        return wp_kses_post(wc_price($price)) . $length_text;
     }
 } 

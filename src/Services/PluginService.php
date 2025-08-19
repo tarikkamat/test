@@ -9,7 +9,8 @@ class PluginService implements PluginServiceInterface
 {
     public function loadPluginTextdomain(): void
     {
-        load_plugin_textdomain('iyzico-subscription', false, dirname(dirname(plugin_basename(__FILE__))) . '/languages');
+        // WordPress.org üzerinde 4.6+ için otomatik yüklenir; manuel yükleme gereksizdir.
+        // Bu metod kasıtlı olarak boş bırakıldı.
     }
 
     public function createDatabaseTables(): void

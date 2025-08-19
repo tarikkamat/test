@@ -30,8 +30,9 @@ class TemplateService implements TemplateServiceInterface
     {
         switch ($template_name) {
             case 'subscription-created':
+                /* translators: 1: user name, 2: product name, 3: amount, 4: period, 5: start date, 6: next payment date */
                 return sprintf(
-                    __('Merhaba %s,\n\n%s aboneliğiniz başarıyla oluşturuldu.\n\nTutar: %s\nPeriyot: %s\nBaşlangıç: %s\nSonraki Ödeme: %s\n\nTeşekkürler!', 'iyzico-subscription'),
+                    __('Merhaba %1$s,\n\n%2$s aboneliğiniz başarıyla oluşturuldu.\n\nTutar: %3$s\nPeriyot: %4$s\nBaşlangıç: %5$s\nSonraki Ödeme: %6$s\n\nTeşekkürler!', 'iyzico-subscription'),
                     $data['user_name'],
                     $data['product_name'],
                     $data['amount'],
@@ -41,8 +42,9 @@ class TemplateService implements TemplateServiceInterface
                 );
                 
             case 'renewal-success':
+                /* translators: 1: user name, 2: product name, 3: amount, 4: payment date, 5: next payment */
                 return sprintf(
-                    __('Merhaba %s,\n\n%s aboneliğiniz başarıyla yenilendi.\n\nTutar: %s\nÖdeme Tarihi: %s\nSonraki Ödeme: %s\n\nTeşekkürler!', 'iyzico-subscription'),
+                    __('Merhaba %1$s,\n\n%2$s aboneliğiniz başarıyla yenilendi.\n\nTutar: %3$s\nÖdeme Tarihi: %4$s\nSonraki Ödeme: %5$s\n\nTeşekkürler!', 'iyzico-subscription'),
                     $data['user_name'],
                     $data['product_name'],
                     $data['amount'],
@@ -51,8 +53,9 @@ class TemplateService implements TemplateServiceInterface
                 );
                 
             case 'renewal-failed':
+                /* translators: 1: user name, 2: product name, 3: error message, 4: retry date, 5: account url */
                 return sprintf(
-                    __('Merhaba %s,\n\n%s aboneliğinizin ödemesi başarısız oldu.\n\nHata: %s\nYeniden deneme: %s\n\nLütfen ödeme bilgilerinizi kontrol edin: %s\n\nTeşekkürler!', 'iyzico-subscription'),
+                    __('Merhaba %1$s,\n\n%2$s aboneliğinizin ödemesi başarısız oldu.\n\nHata: %3$s\nYeniden deneme: %4$s\n\nLütfen ödeme bilgilerinizi kontrol edin: %5$s\n\nTeşekkürler!', 'iyzico-subscription'),
                     $data['user_name'],
                     $data['product_name'],
                     $data['error_message'],
@@ -61,16 +64,18 @@ class TemplateService implements TemplateServiceInterface
                 );
                 
             case 'subscription-cancelled':
+                /* translators: 1: user name, 2: product name, 3: cancellation date */
                 return sprintf(
-                    __('Merhaba %s,\n\n%s aboneliğiniz iptal edildi.\n\nİptal Tarihi: %s\n\nBizi tercih ettiğiniz için teşekkürler!', 'iyzico-subscription'),
+                    __('Merhaba %1$s,\n\n%2$s aboneliğiniz iptal edildi.\n\nİptal Tarihi: %3$s\n\nBizi tercih ettiğiniz için teşekkürler!', 'iyzico-subscription'),
                     $data['user_name'],
                     $data['product_name'],
                     $data['cancellation_date']
                 );
                 
             case 'subscription-suspended':
+                /* translators: 1: user name, 2: product name, 3: failed payments count, 4: suspension date, 5: account url */
                 return sprintf(
-                    __('Merhaba %s,\n\n%s aboneliğiniz askıya alındı.\n\nSebep: %d başarısız ödeme\nTarih: %s\n\nHesabınızdan yeniden aktifleştirebilirsiniz: %s', 'iyzico-subscription'),
+                    __('Merhaba %1$s,\n\n%2$s aboneliğiniz askıya alındı.\n\nSebep: %3$d başarısız ödeme\nTarih: %4$s\n\nHesabınızdan yeniden aktifleştirebilirsiniz: %5$s', 'iyzico-subscription'),
                     $data['user_name'],
                     $data['product_name'],
                     $data['failed_payments'],
@@ -79,8 +84,9 @@ class TemplateService implements TemplateServiceInterface
                 );
                 
             case 'subscription-expiring':
+                /* translators: 1: user name, 2: product name, 3: expiry date, 4: days remaining, 5: renewal url */
                 return sprintf(
-                    __('Merhaba %s,\n\n%s aboneliğiniz yakında sona eriyor.\n\nBitiş Tarihi: %s\nKalan Gün: %d\n\nYenilemek için: %s', 'iyzico-subscription'),
+                    __('Merhaba %1$s,\n\n%2$s aboneliğiniz yakında sona eriyor.\n\nBitiş Tarihi: %3$s\nKalan Gün: %4$d\n\nYenilemek için: %5$s', 'iyzico-subscription'),
                     $data['user_name'],
                     $data['product_name'],
                     $data['expiry_date'],
