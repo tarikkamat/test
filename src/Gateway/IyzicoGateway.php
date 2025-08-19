@@ -55,6 +55,33 @@ class IyzicoGateway extends WC_Payment_Gateway {
         add_action('woocommerce_before_checkout_form', [$this, 'display_checkout_errors']);
     }
 
+    /**
+     * Determine whether the payment method is available for use.
+     * Blocks uses this to decide availability as well.
+     */
+    public function is_available() {
+        if ('yes' !== $this->enabled) {
+            return false;
+        }
+        if (is_admin()) {
+            return true;
+        }
+        if (empty($this->api_key) || empty($this->secret_key)) {
+            return false;
+        }
+        // Require at least one subscription product in cart/order to be eligible
+        if (function_exists('WC') && WC()->cart) {
+            foreach (WC()->cart->get_cart() as $cart_item) {
+                $product = isset($cart_item['data']) ? $cart_item['data'] : null;
+                if ($product && in_array($product->get_type(), ['subscription', 'variable-subscription'], true)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
     public function init_form_fields() {
         $this->form_fields = [
             'enabled' => [
