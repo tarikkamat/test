@@ -79,8 +79,7 @@
 					h(FlexItem, {}, h(Button, { isSecondary: true, onClick: onReset }, __('Temizle', 'iyzico-subscription')))
 				])
 			)
-		)
-		);
+		]);
 	}
 
 	function ActionsCell({ subscription, onAction }) {
