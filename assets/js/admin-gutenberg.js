@@ -32,10 +32,13 @@
 			{ key: 'monthly_revenue', label: iyzicoSubscriptionAdmin.i18n.monthlyRevenue || __('Aylık Gelir', 'iyzico-subscription'), value: (stats && (stats.monthly_revenue_formatted || stats.monthly_revenue)) ? (stats.monthly_revenue_formatted || stats.monthly_revenue) : 0 }
 		];
 		return h(Flex, { gap: 12 }, items.map(function(item) {
+			var content = (typeof item.value === 'string' && item.value.indexOf('<') !== -1)
+				? h('span', { dangerouslySetInnerHTML: { __html: item.value } })
+				: String(item.value);
 			return h(FlexItem, { key: item.key, style: { minWidth: 200 } },
 				h(Card, {}, [
 					h(CardHeader, {}, item.label),
-					h(CardBody, { style: { fontSize: 22, fontWeight: 600 } }, String(item.value))
+					h(CardBody, { style: { fontSize: 22, fontWeight: 600 } }, content)
 				])
 			);
 		}));
@@ -85,19 +88,22 @@
 	function ActionsCell({ subscription, onAction }) {
 		const actions = [];
 		if (subscription.status === 'active') {
-			actions.push({ key: 'suspend', label: iyzicoSubscriptionAdmin.i18n.suspend, action: 'suspend' });
-			actions.push({ key: 'cancel', label: iyzicoSubscriptionAdmin.i18n.cancel, action: 'cancel' });
+			actions.push({ key: 'suspend', label: iyzicoSubscriptionAdmin.i18n.suspend, action: 'suspend', icon: 'dashicons-controls-pause' });
+			actions.push({ key: 'cancel', label: iyzicoSubscriptionAdmin.i18n.cancel, action: 'cancel', icon: 'dashicons-no' });
 		} else if (subscription.status === 'suspended') {
-			actions.push({ key: 'reactivate', label: iyzicoSubscriptionAdmin.i18n.reactivate, action: 'reactivate' });
+			actions.push({ key: 'reactivate', label: iyzicoSubscriptionAdmin.i18n.reactivate, action: 'reactivate', icon: 'dashicons-update' });
 		} else if (subscription.status === 'cancelled') {
-			actions.push({ key: 'reactivate', label: iyzicoSubscriptionAdmin.i18n.reactivate, action: 'reactivate' });
+			actions.push({ key: 'reactivate', label: iyzicoSubscriptionAdmin.i18n.reactivate, action: 'reactivate', icon: 'dashicons-update' });
 		}
 		return h(Flex, { gap: 8 }, actions.map(function(a) {
 			return h(Button, {
 				key: a.key,
 				isSmall: true,
-				onClick: function(){ onAction(subscription.id, a.action); }
-			}, a.label);
+				isSecondary: true,
+				onClick: function(){ onAction(subscription.id, a.action); },
+				title: a.label,
+				'aria-label': a.label
+			}, h('span', { className: 'dashicons ' + a.icon }));
 		}));
 	}
 
@@ -110,6 +116,19 @@
 				])
 			]);
 		}
+		var statusLabel = function(status){
+			var map = {
+				'active': iyzicoSubscriptionAdmin.i18n.active,
+				'suspended': iyzicoSubscriptionAdmin.i18n.suspended,
+				'cancelled': iyzicoSubscriptionAdmin.i18n.cancelled,
+				'expired': iyzicoSubscriptionAdmin.i18n.expired
+			};
+			return map[status] || status;
+		};
+		var periodLabel = function(period){
+			var map = { day: 'Günlük', week: 'Haftalık', month: 'Aylık', year: 'Yıllık' };
+			return map[period] || period || '';
+		};
 		return h('table', { className: 'wp-list-table widefat fixed striped' }, [
 			h('thead', {}, h('tr', {}, [
 				h('th', {}, iyzicoSubscriptionAdmin.i18n.id),
@@ -127,9 +146,9 @@
 					h('td', {}, '#' + s.id),
 					h('td', {}, s.customer_name || ''),
 					h('td', {}, s.product_name || ''),
-					h('td', {}, s.status || ''),
-					h('td', {}, String(s.amount || '')),
-					h('td', {}, s.period || ''),
+					h('td', {}, h('span', { className: 'iyzico-status-badge iyzico-status-' + (s.status || '').toLowerCase(), title: statusLabel(s.status) }, statusLabel(s.status))),
+					h('td', {}, s.amount ? h('span', { className: 'iyzico-amount', dangerouslySetInnerHTML: { __html: s.amount } }) : ''),
+					h('td', {}, h('span', { className: 'iyzico-period-badge', title: periodLabel(s.period) }, [ h('span', { className: 'dashicons dashicons-calendar-alt', style: { marginRight: 4 } }), periodLabel(s.period) ])),
 					h('td', {}, s.start_date ? s.start_date : ''),
 					h('td', {}, s.next_payment ? s.next_payment : ''),
 					h('td', {}, h(ActionsCell, { subscription: s, onAction }))
@@ -208,4 +227,3 @@
 
 	document.addEventListener('DOMContentLoaded', mount);
 })();
-
