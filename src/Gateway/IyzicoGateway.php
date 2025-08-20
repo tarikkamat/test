@@ -1,5 +1,4 @@
 <?php
-<?php
 
 namespace Iyzico\IyzipayWoocommerceSubscription\Gateway;
 
@@ -443,16 +442,6 @@ class IyzicoGateway extends WC_Payment_Gateway {
             return (string) $row->card_user_key;
         }
         return (string) get_user_meta($user_id, '_iyzico_card_user_key', true);
-    }
-
-    private function purgeCustomerCardCredentials(int $user_id): void {
-        delete_user_meta($user_id, '_iyzico_card_user_key');
-        delete_user_meta($user_id, '_iyzico_card_token');
-
-        global $wpdb;
-        $table = $wpdb->prefix . 'iyzico_saved_cards';
-        $wpdb->delete($table, array('user_id' => $user_id));
-        return (string) ($this->savedCardRepository->getCardUserKey($user_id) ?? '');
     }
 
     private function purgeCustomerCardCredentials(int $user_id): void {
