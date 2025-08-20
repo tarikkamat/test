@@ -1,4 +1,5 @@
 <?php
+<?php
 
 namespace Iyzico\IyzipayWoocommerceSubscription\Gateway;
 
@@ -435,6 +436,22 @@ class IyzicoGateway extends WC_Payment_Gateway {
     }
 
     private function getCardUserKeyFromStorage(int $user_id): string {
+        global $wpdb;
+        $table = $wpdb->prefix . 'iyzico_saved_cards';
+        $row = $wpdb->get_row($wpdb->prepare("SELECT card_user_key FROM $table WHERE user_id = %d ORDER BY id DESC LIMIT 1", $user_id));
+        if ($row && !empty($row->card_user_key)) {
+            return (string) $row->card_user_key;
+        }
+        return (string) get_user_meta($user_id, '_iyzico_card_user_key', true);
+    }
+
+    private function purgeCustomerCardCredentials(int $user_id): void {
+        delete_user_meta($user_id, '_iyzico_card_user_key');
+        delete_user_meta($user_id, '_iyzico_card_token');
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'iyzico_saved_cards';
+        $wpdb->delete($table, array('user_id' => $user_id));
         return (string) ($this->savedCardRepository->getCardUserKey($user_id) ?? '');
     }
 
@@ -481,14 +498,12 @@ class IyzicoGateway extends WC_Payment_Gateway {
 
             if ($subscription_id) {
                 $subscription = $subscriptionRepository->find((int) $subscription_id);
-
                 if (did_action('init') && function_exists('__')) {
                     $note = sprintf(__('Abonelik oluşturuldu. Abonelik ID: %s', 'iyzico-subscription'), $subscription_id);
                 } else {
                     $note = sprintf('Abonelik oluşturuldu. Abonelik ID: %s', $subscription_id);
                 }
                 $order->add_order_note($note);
-
                 if ($subscription) {
                     do_action('iyzico_subscription_created', $subscription);
                 }
@@ -584,6 +599,34 @@ class IyzicoGateway extends WC_Payment_Gateway {
     }
 
     private function persistSavedCard(int $user_id, string $card_user_key, string $card_token): void {
+        global $wpdb;
+        if (empty($user_id) || (empty($card_user_key) && empty($card_token))) {
+            return;
+        }
+        $table = $wpdb->prefix . 'iyzico_saved_cards';
+        // Eğer tablo yoksa meta'ya fallback
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
+        if (!$table_exists) {
+            if (!empty($card_user_key)) {
+                update_user_meta($user_id, '_iyzico_card_user_key', $card_user_key);
+            }
+            if (!empty($card_token)) {
+                update_user_meta($user_id, '_iyzico_card_token', $card_token);
+            }
+            return;
+        }
+        // card_user_key güncellenirken mevcut kayıtlar silinmez; yeni satır eklenir ve UNIQUE(user_id, card_token) ile korunur
+        $wpdb->insert(
+            $table,
+            [
+                'user_id' => $user_id,
+                'card_user_key' => $card_user_key,
+                'card_token' => $card_token,
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql'),
+            ],
+            ['%d','%s','%s','%s','%s']
+        );
         $this->savedCardRepository->save($user_id, $card_user_key, $card_token);
     }
 }
