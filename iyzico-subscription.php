@@ -12,6 +12,8 @@
  * Domain Path: /languages
  * Requires at least: 6.6.2
  * Requires PHP: 7.4.3
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 declare(strict_types=1);
@@ -84,7 +86,7 @@ use Iyzico\IyzipayWoocommerceSubscription\Admin\Settings;
                 $links,
                 sprintf(
                     '<a href="%1$s">%2$s</a>',
-                    admin_url('admin.php?page=wc-settings&tab=checkout&section=iyzico-subscription&iyzico-subscription-tab=' . Settings::CONNECTION_TAB_ID),
+                    admin_url('admin.php?page=wc-settings&tab=checkout&section=iyzico_subscription&from=WCADMIN_PAYMENT_SETTINGS'),
                     __('Settings', 'iyzico-subscription')
                 )
             );
