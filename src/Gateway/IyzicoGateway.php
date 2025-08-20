@@ -11,15 +11,18 @@ use Iyzipay\Model\Locale;
 use Iyzipay\Model\PaymentGroup;
 use Iyzipay\Options;
 use Iyzipay\Request\CreateCheckoutFormInitializeRequest;
+use Iyzico\IyzipayWoocommerceSubscription\Models\SavedCardRepository;
+use Iyzico\IyzipayWoocommerceSubscription\Models\SubscriptionFactory;
 
 class IyzicoGateway extends WC_Payment_Gateway {
     public $api_key;
     public $secret_key;
     public $sandbox;
+    private SavedCardRepository $savedCardRepository;
 
     public function __construct() {
         $this->id = 'iyzico_subscription';
-        $this->icon = '';
+        $this->icon = plugin_dir_url(__FILE__) . '../../assets/img/cards/mastercard-visa-amex.svg';
         $this->has_fields = true;
         $this->method_title = 'iyzico Abonelik';
         $this->method_description = 'iyzico ile abonelik ödemeleri';
@@ -44,6 +47,8 @@ class IyzicoGateway extends WC_Payment_Gateway {
         $this->api_key = $this->get_option('api_key');
         $this->secret_key = $this->get_option('secret_key');
         $this->sandbox = $this->get_option('sandbox');
+
+        $this->savedCardRepository = new SavedCardRepository();
 
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, [$this, 'process_admin_options']);
         
@@ -94,14 +99,14 @@ class IyzicoGateway extends WC_Payment_Gateway {
                 'title' => 'Başlık',
                 'type' => 'text',
                 'description' => 'Ödeme sayfasında görünecek başlık',
-                'default' => 'iyzico ile Öde',
+                'default' => 'Kredi Kartı ile Güvenli Ödeme',
                 'desc_tip' => true,
             ],
             'description' => [
                 'title' => 'Açıklama',
                 'type' => 'textarea',
                 'description' => 'Ödeme sayfasında görünecek açıklama',
-                'default' => 'iyzico güvenli ödeme sistemi ile ödeyin',
+                'default' => 'iyzico altyapısı ile kart bilgileriniz güvende. Visa, Mastercard ve Amex ile hızlı ve güvenli ödeme yapın.',
             ],
             'api_key' => [
                 'title' => 'API Anahtarı',
@@ -131,10 +136,10 @@ class IyzicoGateway extends WC_Payment_Gateway {
             $this->form_fields['enabled']['label'] = __('iyzico ödeme geçidini aktifleştir', 'iyzico-subscription');
             $this->form_fields['title']['title'] = __('Başlık', 'iyzico-subscription');
             $this->form_fields['title']['description'] = __('Ödeme sayfasında görünecek başlık', 'iyzico-subscription');
-            $this->form_fields['title']['default'] = __('iyzico ile Öde', 'iyzico-subscription');
+            $this->form_fields['title']['default'] = __('Kredi Kartı ile Güvenli Ödeme', 'iyzico-subscription');
             $this->form_fields['description']['title'] = __('Açıklama', 'iyzico-subscription');
             $this->form_fields['description']['description'] = __('Ödeme sayfasında görünecek açıklama', 'iyzico-subscription');
-            $this->form_fields['description']['default'] = __('iyzico güvenli ödeme sistemi ile ödeyin', 'iyzico-subscription');
+            $this->form_fields['description']['default'] = __('iyzico altyapısı ile kart bilgileriniz güvende. Visa, Mastercard ve Amex ile hızlı ve güvenli ödeme yapın.', 'iyzico-subscription');
             $this->form_fields['api_key']['title'] = __('API Anahtarı', 'iyzico-subscription');
             $this->form_fields['api_key']['description'] = __('iyzico API anahtarınız', 'iyzico-subscription');
             $this->form_fields['secret_key']['title'] = __('Gizli Anahtar', 'iyzico-subscription');
@@ -197,7 +202,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
                     $cancelRequest->setLocale(\Iyzipay\Model\Locale::TR);
                     $cancelRequest->setConversationId($order->get_id() . '_cancel_' . time());
                     $cancelRequest->setPaymentId($checkoutForm->getPaymentId());
-                    $cancelRequest->setIp($_SERVER['REMOTE_ADDR']);
+                    $cancelRequest->setIp(isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '');
 
                     $cancel = \Iyzipay\Model\Cancel::create($cancelRequest, $options);
 
@@ -216,8 +221,9 @@ class IyzicoGateway extends WC_Payment_Gateway {
                         $error_code = $cancel->getErrorCode();
                         
                         // Siparişe not ekle
+                        /* translators: 1: error code, 2: error message */
                         $order->add_order_note(sprintf(
-                            __('Ödeme iptal edilemedi. Hata Kodu: %s, Hata: %s', 'iyzico-subscription'),
+                            __('Ödeme iptal edilemedi. Hata Kodu: %1$s, Hata: %2$s', 'iyzico-subscription'),
                             $error_code,
                             $error_message
                         ));
@@ -243,29 +249,26 @@ class IyzicoGateway extends WC_Payment_Gateway {
                     exit;
                 }
 
-                // Kart bilgilerini kaydet
-                if ($card_token) {
-                    update_user_meta($order->get_customer_id(), '_iyzico_card_token', $card_token);
-                }
-                if ($card_user_key) {
-                    update_user_meta($order->get_customer_id(), '_iyzico_card_user_key', $card_user_key);
+                // Kart bilgilerini kaydet (özel tabloya yaz)
+                if ($card_user_key || $card_token) {
+                    $this->persistSavedCard((int) $order->get_customer_id(), (string) $card_user_key, (string) $card_token);
                 }
 
                 // Siparişi tamamlandı olarak işaretle
                 $order->payment_complete($checkoutForm->getPaymentId());
+                /* translators: 1: payment id */
                 $order->add_order_note(sprintf(
-                    __('iyzico ödemesi tamamlandı. Ödeme ID: %s', 'iyzico-subscription'),
+                    __('iyzico ödemesi tamamlandı. Ödeme ID: %1$s', 'iyzico-subscription'),
                     $checkoutForm->getPaymentId()
                 ));
 
-                // Abonelik kaydını oluştur
+                // Abonelik kaydını oluştur (EmailService tetiklenmesi için action içerir)
                 $this->create_subscription($order);
 
                 // Siparişi tamamlandı olarak işaretle
                 $order->update_status('completed', __('Ödeme başarıyla tamamlandı ve abonelik başlatıldı.', 'iyzico-subscription'));
 
-                // Müşteriye bildirim e-postası gönder
-                $this->send_subscription_notification($order);
+                // E-posta EmailService tarafından action ile tetiklenir
 
                 wp_redirect($this->get_return_url($order));
                 exit;
@@ -292,20 +295,60 @@ class IyzicoGateway extends WC_Payment_Gateway {
 
     public function process_payment($order_id) {
         $order = wc_get_order($order_id);
-        
+
+        $options = $this->buildIyzipayOptions();
+        list($basketItems, $total_amount) = $this->buildBasketItemsAndTotal($order);
+        $request = $this->buildCheckoutInitializeRequest($order, $basketItems, $total_amount, true);
+
+        $checkoutFormInitialize = CheckoutFormInitialize::create($request, $options);
+
+        if ($checkoutFormInitialize->getStatus() === 'success') {
+            return array(
+                'result' => 'success',
+                'redirect' => $checkoutFormInitialize->getPaymentPageUrl()
+            );
+        }
+
+        $errorMessage = method_exists($checkoutFormInitialize, 'getErrorMessage') ? $checkoutFormInitialize->getErrorMessage() : __('Ödeme başlatılamadı.', 'iyzico-subscription');
+        $errorCode = method_exists($checkoutFormInitialize, 'getErrorCode') ? $checkoutFormInitialize->getErrorCode() : '';
+
+        if ($errorCode === '3005' || stripos($errorMessage, 'cardUserKey') !== false) {
+            $this->purgeCustomerCardCredentials((int) $order->get_customer_id());
+
+            $requestWithoutCardKey = $this->buildCheckoutInitializeRequest($order, $basketItems, $total_amount, false);
+            $retryInitialize = CheckoutFormInitialize::create($requestWithoutCardKey, $options);
+
+            if ($retryInitialize->getStatus() === 'success') {
+                return array(
+                    'result' => 'success',
+                    'redirect' => $retryInitialize->getPaymentPageUrl()
+                );
+            }
+
+            $errorMessage = method_exists($retryInitialize, 'getErrorMessage') ? $retryInitialize->getErrorMessage() : $errorMessage;
+            $errorCode = method_exists($retryInitialize, 'getErrorCode') ? $retryInitialize->getErrorCode() : $errorCode;
+        }
+
+        wc_add_notice(sprintf(__('Ödeme başlatılamadı (%1$s): %2$s', 'iyzico-subscription'), $errorCode, $errorMessage), 'error');
+        return array(
+            'result' => 'fail',
+            'messages' => sprintf(__('Ödeme başlatılamadı (%1$s): %2$s', 'iyzico-subscription'), $errorCode, $errorMessage),
+            'redirect' => ''
+        );
+    }
+
+    private function buildIyzipayOptions(): Options {
         $options = new Options();
         $options->setApiKey($this->api_key);
         $options->setSecretKey($this->secret_key);
         $options->setBaseUrl($this->sandbox === 'yes' ? 'https://sandbox-api.iyzipay.com' : 'https://api.iyzipay.com');
+        return $options;
+    }
 
-        $request = new CreateCheckoutFormInitializeRequest();
-        $request->setLocale(Locale::TR);
-        $request->setConversationId($order->get_id());
-        
-        // Sepet öğelerini hazırla ve toplam tutarı hesapla
+    private function buildBasketItemsAndTotal(\WC_Order $order): array {
         $basketItems = array();
         $total_amount = 0;
-        
+
         foreach ($order->get_items() as $item) {
             $basketItem = new BasketItem();
             $basketItem->setId($item->get_product_id());
@@ -316,8 +359,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
             $basketItems[] = $basketItem;
             $total_amount += $item->get_total();
         }
-        
-        // Kargo ücreti varsa sepete ekle
+
         if ($order->get_shipping_total() > 0) {
             $shippingItem = new BasketItem();
             $shippingItem->setId('shipping');
@@ -328,8 +370,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
             $basketItems[] = $shippingItem;
             $total_amount += $order->get_shipping_total();
         }
-        
-        // Vergi varsa sepete ekle
+
         if ($order->get_total_tax() > 0) {
             $taxItem = new BasketItem();
             $taxItem->setId('tax');
@@ -340,7 +381,14 @@ class IyzicoGateway extends WC_Payment_Gateway {
             $basketItems[] = $taxItem;
             $total_amount += $order->get_total_tax();
         }
-        
+
+        return array($basketItems, (float) $total_amount);
+    }
+
+    private function buildCheckoutInitializeRequest(\WC_Order $order, array $basketItems, float $total_amount, bool $attachCardKey): CreateCheckoutFormInitializeRequest {
+        $request = new CreateCheckoutFormInitializeRequest();
+        $request->setLocale(Locale::TR);
+        $request->setConversationId($order->get_id());
         $request->setBasketItems($basketItems);
         $request->setPrice($total_amount);
         $request->setPaidPrice($total_amount);
@@ -350,10 +398,11 @@ class IyzicoGateway extends WC_Payment_Gateway {
         $request->setCallbackUrl(add_query_arg('wc-api', 'iyzico_subscription', home_url('/')));
         $request->setEnabledInstallments(array(1));
 
-        // Müşteri kart saklama: varsa cardUserKey'i isteğe ekle
-        $existing_card_user_key = get_user_meta($order->get_customer_id(), '_iyzico_card_user_key', true);
-        if (!empty($existing_card_user_key) && method_exists($request, 'setCardUserKey')) {
-            $request->setCardUserKey($existing_card_user_key);
+        if ($attachCardKey) {
+            $existing_card_user_key = $this->getCardUserKeyFromStorage((int) $order->get_customer_id());
+            if (!empty($existing_card_user_key) && method_exists($request, 'setCardUserKey')) {
+                $request->setCardUserKey($existing_card_user_key);
+            }
         }
 
         $buyer = new Buyer();
@@ -365,7 +414,7 @@ class IyzicoGateway extends WC_Payment_Gateway {
         $buyer->setRegistrationAddress($order->get_billing_address_1());
         $buyer->setCity($order->get_billing_city());
         $buyer->setCountry($order->get_billing_country());
-        $buyer->setIp($_SERVER['REMOTE_ADDR']);
+        $buyer->setIp(isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '');
         $request->setBuyer($buyer);
 
         $shippingAddress = new \Iyzipay\Model\Address();
@@ -382,41 +431,38 @@ class IyzicoGateway extends WC_Payment_Gateway {
         $billingAddress->setAddress($order->get_billing_address_1());
         $request->setBillingAddress($billingAddress);
 
-        $checkoutFormInitialize = CheckoutFormInitialize::create($request, $options);
+        return $request;
+    }
 
-        if ($checkoutFormInitialize->getStatus() === 'success') {
-            return array(
-                'result' => 'success',
-                'redirect' => $checkoutFormInitialize->getPaymentPageUrl()
-            );
-        } else {
-            wc_add_notice('Ödeme başlatılamadı: ' . $checkoutFormInitialize->getErrorMessage(), 'error');
-            return array(
-                'result' => 'fail',
-                'redirect' => ''
-            );
+    private function getCardUserKeyFromStorage(int $user_id): string {
+        global $wpdb;
+        $table = $wpdb->prefix . 'iyzico_saved_cards';
+        $row = $wpdb->get_row($wpdb->prepare("SELECT card_user_key FROM $table WHERE user_id = %d ORDER BY id DESC LIMIT 1", $user_id));
+        if ($row && !empty($row->card_user_key)) {
+            return (string) $row->card_user_key;
         }
+        return (string) get_user_meta($user_id, '_iyzico_card_user_key', true);
+    }
+
+    private function purgeCustomerCardCredentials(int $user_id): void {
+        $this->savedCardRepository->purgeForUser($user_id);
     }
 
     private function create_subscription($order) {
-        $subscription_model = new \Iyzico\IyzipayWoocommerceSubscription\Models\Subscription();
-        
+        $subscriptionService = SubscriptionFactory::createSubscriptionService();
+        $subscriptionRepository = SubscriptionFactory::createSubscriptionRepository();
+
         foreach ($order->get_items() as $item) {
             $product = $item->get_product();
             
-            // Ürün tipini doğru şekilde kontrol et
             if (!$product || !in_array($product->get_type(), ['subscription', 'variable-subscription'])) {
                 continue;
             }
 
-            // Abonelik periyodu ve süresini al
             $period = get_post_meta($product->get_id(), '_subscription_period', true) ?: 'month';
             $length = get_post_meta($product->get_id(), '_subscription_length', true) ?: 0;
 
-            // Başlangıç tarihi
             $start_date = current_time('mysql');
-
-            // Sonraki ödeme tarihini hesapla
             $next_payment_date = $this->calculate_next_payment_date($product);
 
             $subscription_data = [
@@ -437,64 +483,27 @@ class IyzicoGateway extends WC_Payment_Gateway {
                 'billing_cycles' => $length > 0 ? $length : 0,
             ];
 
-            $subscription_id = $subscription_model->create($subscription_data);
+            $subscription_id = $subscriptionService->createSubscription($subscription_data);
 
             if ($subscription_id) {
-                // Abonelik meta verilerini kaydet
-                update_post_meta($order->get_id(), '_subscription_id', $subscription_id);
-                update_post_meta($order->get_id(), '_is_subscription', 'yes');
-                
-                // Sipariş notu ekle
+                $subscription = $subscriptionRepository->find((int) $subscription_id);
                 if (did_action('init') && function_exists('__')) {
                     $note = sprintf(__('Abonelik oluşturuldu. Abonelik ID: %s', 'iyzico-subscription'), $subscription_id);
                 } else {
                     $note = sprintf('Abonelik oluşturuldu. Abonelik ID: %s', $subscription_id);
                 }
                 $order->add_order_note($note);
-
-                // Müşteri meta verilerini güncelle
-                update_user_meta($order->get_customer_id(), '_has_active_subscription', 'yes');
+                if ($subscription) {
+                    do_action('iyzico_subscription_created', $subscription);
+                }
             } else {
-                // Hata durumunda log ekle
                 error_log('Abonelik oluşturulamadı. Order ID: ' . $order->get_id());
                 error_log('Subscription data: ' . print_r($subscription_data, true));
-                if ($subscription_model->wpdb->last_error) {
-                    error_log('Database error: ' . $subscription_model->wpdb->last_error);
-                }
             }
         }
     }
 
-    private function send_subscription_notification($order) {
-        $customer_email = $order->get_billing_email();
-        $customer_name = $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
-        
-        $subject = sprintf(__('Aboneliğiniz Başarıyla Başlatıldı - Sipariş #%s', 'iyzico-subscription'), $order->get_id());
-        
-        $message = sprintf(
-            __('Merhaba %s,
-
-Aboneliğiniz başarıyla başlatıldı. Sipariş detaylarınız aşağıdaki gibidir:
-
-Sipariş Numarası: #%s
-Toplam Tutar: %s
-Ödeme Yöntemi: %s
-
-Aboneliğinizi yönetmek için hesabınıza giriş yapabilirsiniz: %s
-
-Teşekkür ederiz.',
-            'iyzico-subscription'),
-            $customer_name,
-            $order->get_id(),
-            $order->get_formatted_order_total(),
-            $order->get_payment_method_title(),
-            wc_get_account_endpoint_url('subscriptions')
-        );
-
-        $headers = ['Content-Type: text/html; charset=UTF-8'];
-        
-        wp_mail($customer_email, $subject, $message, $headers);
-    }
+    
 
     private function calculate_next_payment_date($product) {
         $period = get_post_meta($product->get_id(), '_subscription_period', true);
@@ -504,16 +513,16 @@ Teşekkür ederiz.',
         
         switch ($period) {
             case 'day':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 day'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 day'));
                 break;
             case 'week':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 week'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 week'));
                 break;
             case 'month':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 month'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 month'));
                 break;
             case 'year':
-                $next_date = date('Y-m-d H:i:s', strtotime($next_date . ' +1 year'));
+                $next_date = gmdate('Y-m-d H:i:s', strtotime($next_date . ' +1 year'));
                 break;
         }
         
@@ -535,8 +544,9 @@ Teşekkür ederiz.',
                     break;
                     
                 case 'cancel_failed':
+                    /* translators: 1: error code, 2: error message */
                     $display_message = sprintf(
-                        __('Ödeme iptal edilemedi. Hata Kodu: %s, Hata: %s', 'iyzico-subscription'),
+                        __('Ödeme iptal edilemedi. Hata Kodu: %1$s, Hata: %2$s', 'iyzico-subscription'),
                         $error_code,
                         $error_message
                     );
@@ -547,8 +557,9 @@ Teşekkür ederiz.',
                     break;
                     
                 case 'general_error':
+                    /* translators: 1: error message */
                     $display_message = sprintf(
-                        __('İşlem sırasında bir hata oluştu: %s', 'iyzico-subscription'),
+                        __('İşlem sırasında bir hata oluştu: %1$s', 'iyzico-subscription'),
                         $error_message
                     );
                     break;
@@ -574,5 +585,37 @@ Teşekkür ederiz.',
                 exit;
             }
         }
+    }
+
+    private function persistSavedCard(int $user_id, string $card_user_key, string $card_token): void {
+        global $wpdb;
+        if (empty($user_id) || (empty($card_user_key) && empty($card_token))) {
+            return;
+        }
+        $table = $wpdb->prefix . 'iyzico_saved_cards';
+        // Eğer tablo yoksa meta'ya fallback
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
+        if (!$table_exists) {
+            if (!empty($card_user_key)) {
+                update_user_meta($user_id, '_iyzico_card_user_key', $card_user_key);
+            }
+            if (!empty($card_token)) {
+                update_user_meta($user_id, '_iyzico_card_token', $card_token);
+            }
+            return;
+        }
+        // card_user_key güncellenirken mevcut kayıtlar silinmez; yeni satır eklenir ve UNIQUE(user_id, card_token) ile korunur
+        $wpdb->insert(
+            $table,
+            [
+                'user_id' => $user_id,
+                'card_user_key' => $card_user_key,
+                'card_token' => $card_token,
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql'),
+            ],
+            ['%d','%s','%s','%s','%s']
+        );
+        $this->savedCardRepository->save($user_id, $card_user_key, $card_token);
     }
 }

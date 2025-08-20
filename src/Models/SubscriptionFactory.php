@@ -12,6 +12,7 @@ use Iyzico\IyzipayWoocommerceSubscription\Services\AccountService;
 use Iyzico\IyzipayWoocommerceSubscription\Services\PluginService;
 use Iyzico\IyzipayWoocommerceSubscription\Services\HookService;
 use Iyzico\IyzipayWoocommerceSubscription\Gateway\IyzicoGateway;
+use Iyzico\IyzipayWoocommerceSubscription\Models\SavedCardRepository;
 
 class SubscriptionFactory
 {
@@ -63,8 +64,9 @@ class SubscriptionFactory
         $repository = self::createSubscriptionRepository();
         $gateway = new IyzicoGateway();
         $emailService = self::createEmailService();
+        $savedCardRepository = new SavedCardRepository();
         
-        return new RenewalService($repository, $gateway, $emailService);
+        return new RenewalService($repository, $gateway, $emailService, $savedCardRepository);
     }
 
     public static function createSubscriptionAdminService(): SubscriptionAdminService

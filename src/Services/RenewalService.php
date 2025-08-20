@@ -5,6 +5,7 @@ namespace Iyzico\IyzipayWoocommerceSubscription\Services;
 use Iyzico\IyzipayWoocommerceSubscription\Services\Interfaces\RenewalServiceInterface;
 use Iyzico\IyzipayWoocommerceSubscription\Services\Interfaces\EmailServiceInterface;
 use Iyzico\IyzipayWoocommerceSubscription\Models\Interfaces\SubscriptionRepositoryInterface;
+use Iyzico\IyzipayWoocommerceSubscription\Models\Interfaces\SavedCardRepositoryInterface;
 use Iyzico\IyzipayWoocommerceSubscription\Gateway\IyzicoGateway;
 
 class RenewalService implements RenewalServiceInterface
@@ -12,15 +13,18 @@ class RenewalService implements RenewalServiceInterface
     private SubscriptionRepositoryInterface $subscriptionRepository;
     private IyzicoGateway $gateway;
     private EmailServiceInterface $emailService;
+    private SavedCardRepositoryInterface $savedCardRepository;
 
     public function __construct(
         SubscriptionRepositoryInterface $subscriptionRepository,
         IyzicoGateway $gateway,
-        EmailServiceInterface $emailService
+        EmailServiceInterface $emailService,
+        SavedCardRepositoryInterface $savedCardRepository
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->gateway = $gateway;
         $this->emailService = $emailService;
+        $this->savedCardRepository = $savedCardRepository;
         
         // Cron job'ları kaydet
         add_action('wp', [$this, 'scheduleRenewalCheck']);
@@ -132,8 +136,8 @@ class RenewalService implements RenewalServiceInterface
 
             // Kayıtlı kart ile ödeme (gerçek implementasyonda card token kullanılacak)
             $paymentCard = new \Iyzipay\Model\PaymentCard();
-            $paymentCard->setCardUserKey($this->getCardUserKey($subscription->user_id));
-            $paymentCard->setCardToken($this->getCardToken($subscription->user_id));
+            $paymentCard->setCardUserKey($this->savedCardRepository->getCardUserKey((int) $subscription->user_id) ?? '');
+            $paymentCard->setCardToken($this->savedCardRepository->getCardToken((int) $subscription->user_id) ?? '');
             $request->setPaymentCard($paymentCard);
 
             $payment = \Iyzipay\Model\Payment::create($request, $options);
@@ -184,15 +188,7 @@ class RenewalService implements RenewalServiceInterface
         }
     }
 
-    private function getCardUserKey(int $user_id): string {
-        // Kullanıcının kayıtlı kart anahtarını getir
-        return get_user_meta($user_id, '_iyzico_card_user_key', true);
-    }
-
-    private function getCardToken(int $user_id): string {
-        // Kullanıcının kayıtlı kart token'ını getir
-        return get_user_meta($user_id, '_iyzico_card_token', true);
-    }
+    
 
     public function cancelSubscription(int $subscription_id): bool {
         $subscription = $this->subscriptionRepository->find($subscription_id);
