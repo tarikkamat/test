@@ -70,8 +70,6 @@ class HookService implements HookServiceInterface
     {
         // Ödeme işlemleri
         add_filter('woocommerce_payment_gateways', [$this->pluginService, 'addIyzicoGateway']);
-        
-        // WooCommerce Blocks desteği - tek seferlik kayıt
         $this->pluginService->addWooCommerceBlocksSupport();
     }
 
